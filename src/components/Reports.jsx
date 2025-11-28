@@ -2,6 +2,26 @@ import React, { useState, useEffect } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import api from "../utils/api";
 
+// Register Chart.js Dependencies
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend
+);
+
 const Reports = () => {
   const [lastWeekData, setLastWeekData] = useState([]);
   const [pipelineData, setPipelineData] = useState(0);
@@ -11,17 +31,18 @@ const Reports = () => {
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const lastWeek = await api.get("/report/last-week");
-        const pipeline = await api.get("/report/pipeline");
+        const lastWeekRes = await api.get("/report/last-week");
+        const pipelineRes = await api.get("/report/pipeline");
 
-        setLastWeekData(lastWeek.data.data || []);
-        setPipelineData(pipeline.data.data.totalLeadsInPipeline);
-      } catch (err) {
+        setLastWeekData(lastWeekRes.data.data || []);
+        setPipelineData(pipelineRes.data.data.totalLeadsInPipeline);
+      } catch {
         setError("Failed to fetch reports");
       } finally {
         setLoading(false);
       }
     };
+
     fetchReports();
   }, []);
 
@@ -65,7 +86,7 @@ const Reports = () => {
     <div>
       <h2 className="mb-4 fw-bold text-primary">📊 Reporting Dashboard</h2>
 
-      {/* Summary Numbers */}
+      {/* Summary Cards */}
       <div className="row g-4 mb-4">
         <div className="col-md-6">
           <div className="card text-center shadow-sm p-3 border-0">
@@ -82,7 +103,7 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Charts Section */}
+      {/* Graphs */}
       <div className="row g-4">
         <div className="col-md-6">
           <div className="card shadow-sm border-0 p-4">
@@ -101,7 +122,7 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Table for Closed Leads */}
+      {/* Table */}
       <div className="card shadow-sm p-3 mt-4 border-0">
         <h5 className="fw-semibold text-dark mb-3">
           🧾 Closed Leads Breakdown
