@@ -28,9 +28,9 @@ const LeadList = () => {
 
   return (
     <div>
-      <h2 className="mb-3">Leads</h2>
+      <h2 className="mb-3 fw-bold">Leads</h2>
 
-      <div className="card p-3 mb-4">
+      <div className="card p-3 mb-4 shadow-sm">
         <div className="row g-3">
           <div className="col-md-3">
             <input
@@ -76,24 +76,28 @@ const LeadList = () => {
         </div>
       </div>
 
-      <table className="table table-hover">
+      <table className="table table-hover align-middle">
         <thead className="table-dark">
           <tr>
             <th>Name</th>
             <th>Status</th>
             <th>Agent</th>
+            <th className="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
           {leads.map((lead) => (
             <tr key={lead._id}>
-              <td>
-                <Link to={`/leads/${lead._id}`} className="fw-semibold">
-                  {lead.name}
-                </Link>
-              </td>
+              <td className="fw-semibold">{lead.name}</td>
               <td>{lead.status}</td>
               <td>{lead.salesAgent?.name || "Unassigned"}</td>
+              <td className="text-center">
+                <Link to={`/leads/${lead._id}`}>
+                  <button className="btn btn-outline-primary btn-sm">
+                    View Details
+                  </button>
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>
