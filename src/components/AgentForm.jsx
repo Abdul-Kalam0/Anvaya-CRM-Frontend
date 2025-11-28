@@ -6,17 +6,21 @@ import api from "../utils/api";
 const AgentForm = () => {
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState(null); // success / error message
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Email validation regex (matches your backend's strictEmailRegex)
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    // Clear errors on change
-    if (errors[name]) setErrors({ ...errors, [name]: "" });
+
+    // Clear errors or success message when typing
+    if (errors[name] || message) {
+      setErrors({ ...errors, [name]: "" });
+      setMessage(null);
+    }
   };
 
   const validate = () => {
@@ -25,6 +29,7 @@ const AgentForm = () => {
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     else if (!emailRegex.test(formData.email))
       newErrors.email = "Please enter a valid email address.";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -36,15 +41,21 @@ const AgentForm = () => {
     setLoading(true);
     try {
       const response = await api.post("/agents", formData);
+
       if (response.data.success) {
-        alert("Sales agent created successfully!");
-        navigate("/"); // Redirect to leads list (or /agents if you have an agents list page)
+        setMessage({ type: "success", text: "Agent created successfully!" });
+
+        setTimeout(() => {
+          navigate("/agents"); // redirect after success
+        }, 1000);
       }
     } catch (error) {
-      const errorMsg =
-        error.response?.data?.error ||
-        "Failed to create agent. Please try again.";
-      alert(errorMsg);
+      setMessage({
+        type: "danger",
+        text:
+          error.response?.data?.error ||
+          "Failed to create agent. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -53,59 +64,58 @@ const AgentForm = () => {
   return (
     <div
       style={{
-        maxWidth: "400px",
+        maxWidth: "420px",
         margin: "20px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
       }}
     >
-      <h2>Create Sales Agent</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "15px" }}>
-          <label>Name:</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-            required
-          />
-          {errors.name && (
-            <p style={{ color: "red", fontSize: "14px" }}>{errors.name}</p>
-          )}
-        </div>
-        <div style={{ marginBottom: "15px" }}>
-          <label>Email:</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-            required
-          />
-          {errors.email && (
-            <p style={{ color: "red", fontSize: "14px" }}>{errors.email}</p>
-          )}
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Creating..." : "Create Agent"}
-        </button>
-      </form>
+      <div className="card p-4 shadow-sm">
+        <h3 className="mb-3 fw-bold">Create Sales Agent</h3>
+
+        {/* Status Message */}
+        {message && (
+          <div className={`alert alert-${message.type} text-center`}>
+            {message.text}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label className="fw-semibold">Name</label>
+            <input
+              className="form-control"
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+            />
+            {errors.name && (
+              <div className="text-danger small mt-1">{errors.name}</div>
+            )}
+          </div>
+
+          <div className="mb-3">
+            <label className="fw-semibold">Email</label>
+            <input
+              className="form-control"
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            {errors.email && (
+              <div className="text-danger small mt-1">{errors.email}</div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+            disabled={loading}
+          >
+            {loading ? "Creating..." : "Create Agent"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

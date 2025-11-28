@@ -14,15 +14,23 @@ const LeadForm = () => {
   });
 
   const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
   const navigate = useNavigate();
+
+  // Auto-hide message function
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 2000);
+  };
 
   useEffect(() => {
     const fetchAgents = async () => {
       try {
         const res = await api.get("/agents");
-        setAgents(res.data.data.Agents);
+        setAgents(res.data.data.Agents || []);
       } catch {
-        alert("Error fetching agents");
+        showMessage("danger", "Failed to load sales agents.");
       }
     };
     fetchAgents();
@@ -30,20 +38,25 @@ const LeadForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "tags") {
-      setFormData({ ...formData, tags: value.split(",").map((t) => t.trim()) });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
+    setFormData({
+      ...formData,
+      [name]: name === "tags" ? value.split(",").map((t) => t.trim()) : value,
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
       await api.post("/leads", formData);
-      navigate("/");
+      showMessage("success", "Lead created successfully!");
+
+      setTimeout(() => navigate("/"), 1200);
     } catch {
-      alert("Error creating lead");
+      showMessage("danger", "Failed to create lead.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -51,12 +64,20 @@ const LeadForm = () => {
     <div>
       <h2 className="mb-4 fw-semibold">Create New Lead</h2>
 
+      {/* Status Message */}
+      {message && (
+        <div className={`alert alert-${message.type} text-center`} role="alert">
+          {message.text}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="row g-3">
         <div className="col-md-6">
           <label className="form-label">Lead Name</label>
           <input
             name="name"
             className="form-control"
+            value={formData.name}
             onChange={handleChange}
             required
           />
@@ -67,6 +88,7 @@ const LeadForm = () => {
           <select
             name="source"
             className="form-select"
+            value={formData.source}
             onChange={handleChange}
             required
           >
@@ -74,6 +96,7 @@ const LeadForm = () => {
             <option value="Website">Website</option>
             <option value="Referral">Referral</option>
             <option value="Cold Call">Cold Call</option>
+            <option value="Social Media">Social Media</option>
           </select>
         </div>
 
@@ -82,21 +105,31 @@ const LeadForm = () => {
           <select
             name="salesAgent"
             className="form-select"
+            value={formData.salesAgent}
             onChange={handleChange}
             required
           >
             <option value="">Select Agent</option>
-            {agents.map((agent) => (
-              <option key={agent._id} value={agent._id}>
-                {agent.name}
-              </option>
-            ))}
+            {agents.length > 0 ? (
+              agents.map((agent) => (
+                <option key={agent._id} value={agent._id}>
+                  {agent.name}
+                </option>
+              ))
+            ) : (
+              <option disabled>No Agents Available</option>
+            )}
           </select>
         </div>
 
         <div className="col-md-6">
           <label className="form-label">Status</label>
-          <select name="status" className="form-select" onChange={handleChange}>
+          <select
+            name="status"
+            className="form-select"
+            value={formData.status}
+            onChange={handleChange}
+          >
             <option value="New">New</option>
             <option value="Contacted">Contacted</option>
             <option value="Qualified">Qualified</option>
@@ -111,6 +144,7 @@ const LeadForm = () => {
             className="form-control"
             name="tags"
             placeholder="Comma-separated"
+            value={formData.tags.join(", ")}
             onChange={handleChange}
           />
         </div>
@@ -121,6 +155,7 @@ const LeadForm = () => {
             type="number"
             className="form-control"
             name="timeToClose"
+            value={formData.timeToClose}
             required
             onChange={handleChange}
           />
@@ -131,18 +166,21 @@ const LeadForm = () => {
           <select
             name="priority"
             className="form-select"
+            value={formData.priority}
             onChange={handleChange}
           >
             <option value="High">High</option>
-            <option value="Medium" defaultValue>
-              Medium
-            </option>
+            <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
         </div>
 
-        <button type="submit" className="btn btn-primary w-100 mt-3">
-          Create Lead
+        <button
+          type="submit"
+          className="btn btn-primary w-100 mt-3"
+          disabled={loading}
+        >
+          {loading ? "Creating..." : "Create Lead"}
         </button>
       </form>
     </div>

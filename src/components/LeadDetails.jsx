@@ -10,12 +10,15 @@ const LeadDetails = () => {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // UI messages
+  const [message, setMessage] = useState(null);
+
   const fetchComments = async () => {
     try {
       const res = await api.get(`/leads/${id}/comments`);
       setComments(res.data.data.comments);
     } catch {
-      console.log("No comments found");
+      setComments([]); // No comments found
     }
   };
 
@@ -23,10 +26,10 @@ const LeadDetails = () => {
     const fetchLead = async () => {
       try {
         const res = await api.get(`/leads/${id}`);
-        setLead(res.data.data); // <-- FIXED
-        setStatus(res.data.data.status); // <-- FIXED
+        setLead(res.data.data);
+        setStatus(res.data.data.status);
       } catch (err) {
-        alert("Error loading lead");
+        setMessage({ type: "danger", text: "Failed to load lead details." });
       } finally {
         setLoading(false);
       }
@@ -36,26 +39,52 @@ const LeadDetails = () => {
     fetchComments();
   }, [id]);
 
+  const showMessage = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 1500);
+  };
+
   const handleStatusUpdate = async () => {
     try {
       await api.put(`/leads/${id}`, { status });
-      alert("Status updated!");
+      showMessage("success", "Status updated successfully!");
     } catch {
-      alert("Update failed");
+      showMessage("danger", "Failed to update status.");
     }
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
-    await api.post(`/leads/${id}/comments`, { commentText: newComment });
-    setNewComment("");
-    fetchComments();
+    if (!newComment.trim()) {
+      showMessage("danger", "Comment cannot be empty.");
+      return;
+    }
+
+    try {
+      await api.post(`/leads/${id}/comments`, { commentText: newComment });
+      setNewComment("");
+      fetchComments();
+      showMessage("success", "Comment added!");
+    } catch {
+      showMessage("danger", "Failed to add comment.");
+    }
   };
 
-  if (loading) return <div className="text-center mt-5">Loading...</div>;
+  if (loading)
+    return (
+      <div className="text-center mt-5">
+        <div className="spinner-border text-primary" role="status" />
+      </div>
+    );
 
   return (
     <div className="card p-4 shadow-sm">
+      {/* Status Message */}
+      {message && (
+        <div className={`alert alert-${message.type} text-center`} role="alert">
+          {message.text}
+        </div>
+      )}
+
       <h2 className="fw-bold">{lead.name}</h2>
       <p>
         <strong>Source:</strong> {lead.source}
@@ -96,20 +125,21 @@ const LeadDetails = () => {
       <h4 className="mt-4">Comments</h4>
 
       <ul className="list-group mb-3">
-        {comments.length === 0 && (
+        {comments.length === 0 ? (
           <li className="list-group-item text-muted text-center">
             No comments yet.
           </li>
+        ) : (
+          comments.map((c) => (
+            <li className="list-group-item" key={c.id || c._id}>
+              <strong>{c.author}</strong>: {c.commentText}
+              <br />
+              <small className="text-muted">
+                {new Date(c.createdAt).toLocaleString()}
+              </small>
+            </li>
+          ))
         )}
-        {comments.map((c) => (
-          <li className="list-group-item" key={c.id}>
-            <strong>{c.author}</strong>: {c.commentText}
-            <br />
-            <small className="text-muted">
-              {new Date(c.createdAt).toLocaleString()}
-            </small>
-          </li>
-        ))}
       </ul>
 
       <textarea
