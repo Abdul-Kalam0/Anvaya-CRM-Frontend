@@ -4,9 +4,9 @@ import api from "../utils/api";
 
 const LeadList = () => {
   const [leads, setLeads] = useState([]);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchLeads = async () => {
     try {
@@ -21,8 +21,13 @@ const LeadList = () => {
         setLeads(res.data.leads);
         setErrorMessage(null);
       }
-    } catch (error) {
-      setErrorMessage("Unable to fetch leads. Please try again.");
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setLeads([]);
+        setErrorMessage("No leads found with the applied filters.");
+      } else {
+        setErrorMessage("Unable to fetch leads. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -41,14 +46,14 @@ const LeadList = () => {
 
   const resetFilters = () => {
     setSearchParams({});
+    setErrorMessage(null);
   };
 
   return (
     <div>
       <h2 className="mb-3 fw-bold">Leads</h2>
 
-      {/* Filter Controls */}
-      <div className="card p-3 mb-4">
+      <div className="card p-3 mb-4 shadow-sm">
         <div className="row g-3">
           <div className="col-md-3">
             <input
@@ -104,48 +109,49 @@ const LeadList = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <table className="table table-hover align-middle">
-        <thead className="table-dark">
-          <tr>
-            <th>Name</th>
-            <th>Status</th>
-            <th>Agent</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status"></div>
+          <p className="mt-2">Loading leads...</p>
+        </div>
+      )}
 
-        <tbody>
-          {loading ? (
+      {/* Error or Empty State */}
+      {!loading && errorMessage && (
+        <div className="alert alert-warning text-center">{errorMessage}</div>
+      )}
+
+      {/* Table */}
+      {!loading && !errorMessage && (
+        <table className="table table-hover">
+          <thead className="table-dark">
             <tr>
-              <td colSpan="4" className="text-center py-4">
-                <div className="spinner-border text-primary"></div>
-              </td>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Agent</th>
+              <th className="text-center">Actions</th>
             </tr>
-          ) : errorMessage ? (
-            <tr>
-              <td colSpan="4" className="text-center text-muted py-4">
-                {errorMessage}
-              </td>
-            </tr>
-          ) : (
-            leads.map((lead) => (
+          </thead>
+          <tbody>
+            {leads.map((lead) => (
               <tr key={lead._id}>
                 <td className="fw-semibold">{lead.name}</td>
                 <td>{lead.status}</td>
                 <td>{lead.salesAgent?.name || "Unassigned"}</td>
                 <td className="text-center">
-                  <Link to={`/leads/${lead._id}`}>
-                    <button className="btn btn-outline-primary btn-sm">
-                      View Details
-                    </button>
+                  <Link
+                    className="btn btn-primary btn-sm"
+                    to={`/leads/${lead._id}`}
+                  >
+                    View Details
                   </Link>
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
