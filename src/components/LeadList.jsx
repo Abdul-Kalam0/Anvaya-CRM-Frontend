@@ -5,17 +5,30 @@ import api from "../utils/api";
 const LeadList = () => {
   const [leads, setLeads] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchLeads = async () => {
+    try {
+      setLoading(true);
+      const params = Object.fromEntries(searchParams);
+      const res = await api.get("/leads", { params });
+
+      if (!res.data.leads || res.data.leads.length === 0) {
+        setLeads([]);
+        setErrorMessage("No leads match the selected filters.");
+      } else {
+        setLeads(res.data.leads);
+        setErrorMessage(null);
+      }
+    } catch (error) {
+      setErrorMessage("Unable to fetch leads. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        const params = Object.fromEntries(searchParams);
-        const res = await api.get("/leads", { params });
-        setLeads(res.data.leads);
-      } catch {
-        alert("Error fetching leads");
-      }
-    };
     fetchLeads();
   }, [searchParams]);
 
@@ -26,11 +39,16 @@ const LeadList = () => {
     setSearchParams(newParams);
   };
 
+  const resetFilters = () => {
+    setSearchParams({});
+  };
+
   return (
     <div>
       <h2 className="mb-3 fw-bold">Leads</h2>
 
-      <div className="card p-3 mb-4 shadow-sm">
+      {/* Filter Controls */}
+      <div className="card p-3 mb-4">
         <div className="row g-3">
           <div className="col-md-3">
             <input
@@ -62,7 +80,7 @@ const LeadList = () => {
             />
           </div>
 
-          <div className="col-md-3">
+          <div className="col-md-2">
             <select
               className="form-select"
               onChange={(e) => handleFilter("source", e.target.value)}
@@ -71,11 +89,22 @@ const LeadList = () => {
               <option value="Website">Website</option>
               <option value="Referral">Referral</option>
               <option value="Cold Call">Cold Call</option>
+              <option value="Social Media">Social Media</option>
             </select>
+          </div>
+
+          <div className="col-md-1 d-flex align-items-center">
+            <button
+              className="btn btn-outline-danger w-100"
+              onClick={resetFilters}
+            >
+              Reset
+            </button>
           </div>
         </div>
       </div>
 
+      {/* Table */}
       <table className="table table-hover align-middle">
         <thead className="table-dark">
           <tr>
@@ -85,21 +114,36 @@ const LeadList = () => {
             <th className="text-center">Actions</th>
           </tr>
         </thead>
+
         <tbody>
-          {leads.map((lead) => (
-            <tr key={lead._id}>
-              <td className="fw-semibold">{lead.name}</td>
-              <td>{lead.status}</td>
-              <td>{lead.salesAgent?.name || "Unassigned"}</td>
-              <td className="text-center">
-                <Link to={`/leads/${lead._id}`}>
-                  <button className="btn btn-outline-primary btn-sm">
-                    View Details
-                  </button>
-                </Link>
+          {loading ? (
+            <tr>
+              <td colSpan="4" className="text-center py-4">
+                <div className="spinner-border text-primary"></div>
               </td>
             </tr>
-          ))}
+          ) : errorMessage ? (
+            <tr>
+              <td colSpan="4" className="text-center text-muted py-4">
+                {errorMessage}
+              </td>
+            </tr>
+          ) : (
+            leads.map((lead) => (
+              <tr key={lead._id}>
+                <td className="fw-semibold">{lead.name}</td>
+                <td>{lead.status}</td>
+                <td>{lead.salesAgent?.name || "Unassigned"}</td>
+                <td className="text-center">
+                  <Link to={`/leads/${lead._id}`}>
+                    <button className="btn btn-outline-primary btn-sm">
+                      View Details
+                    </button>
+                  </Link>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
