@@ -1,44 +1,59 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-      <Link className="navbar-brand fw-bold" to="/">
+      <NavLink className="navbar-brand fw-bold" to="/">
         Anvaya CRM
-      </Link>
+      </NavLink>
 
-      <div className="collapse navbar-collapse show">
+      {/* Mobile Toggle Button */}
+      <button
+        className="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+      >
+        <span className="navbar-toggler-icon"></span>
+      </button>
+
+      <div className="collapse navbar-collapse" id="navbarSupportedContent">
         <ul className="navbar-nav ms-auto">
           <li className="nav-item">
-            <Link className="nav-link" to="/leads">
+            <NavLink className="nav-link" to="/leads">
               Leads
-            </Link>
+            </NavLink>
           </li>
+
           <li className="nav-item">
-            <Link className="nav-link" to="/create-lead">
+            <NavLink className="nav-link" to="/create-lead">
               Create Lead
-            </Link>
+            </NavLink>
           </li>
+
           <li className="nav-item">
-            <Link className="nav-link" to="/create-agent">
+            <NavLink className="nav-link" to="/create-agent">
               Create Agent
-            </Link>
+            </NavLink>
           </li>
+
           <li className="nav-item">
-            <Link className="nav-link" to="/status">
+            <NavLink className="nav-link" to="/status">
               By Status
-            </Link>
+            </NavLink>
           </li>
+
           <li className="nav-item">
-            <Link className="nav-link" to="/agents">
-              By Agent
-            </Link>
+            <NavLink className="nav-link" to="/agents">
+              Sales Agents
+            </NavLink>
           </li>
+
           <li className="nav-item">
-            <Link className="nav-link" to="/reports">
+            <NavLink className="nav-link" to="/reports">
               Reports
-            </Link>
+            </NavLink>
           </li>
         </ul>
       </div>

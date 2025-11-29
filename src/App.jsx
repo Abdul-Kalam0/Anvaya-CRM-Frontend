@@ -1,13 +1,16 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import LeadList from "./components/LeadList";
-import LeadForm from "./components/LeadForm.jsx";
+import LeadForm from "./components/LeadForm";
 import LeadDetails from "./components/LeadDetails";
 import LeadStatusView from "./components/LeadStatusView";
-import SalesAgentView from "./components/SalesAgentView";
+
+import SalesAgentManagement from "./components/SalesAgentManagement"; // NEW
+import AgentForm from "./components/AgentForm";
+
 import Reports from "./components/Reports";
 import Navbar from "./components/Navbar";
-import AgentForm from "./components/AgentForm.jsx"; // Added import for AgentForm
 
 function App() {
   return (
@@ -21,10 +24,13 @@ function App() {
             <Route path="/leads" element={<LeadList />} />
             <Route path="/leads/:id" element={<LeadDetails />} />
             <Route path="/create-lead" element={<LeadForm />} />
-            <Route path="/create-agent" element={<AgentForm />} />{" "}
-            {/* Added route for AgentForm */}
+
+            {/* Sales Agent Screens */}
+            <Route path="/agents" element={<SalesAgentManagement />} />
+            <Route path="/create-agent" element={<AgentForm />} />
+
+            {/* Other Views */}
             <Route path="/status" element={<LeadStatusView />} />
-            <Route path="/agents" element={<SalesAgentView />} />
             <Route path="/reports" element={<Reports />} />
           </Routes>
         </div>
