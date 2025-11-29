@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../utils/api";
 
-const SalesAgentManagement = () => {
+const AgentList = () => {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -94,4 +94,4 @@ const SalesAgentManagement = () => {
   );
 };
 
-export default SalesAgentManagement;
+export default AgentList;

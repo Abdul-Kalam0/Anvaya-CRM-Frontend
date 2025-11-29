@@ -6,11 +6,11 @@ import LeadForm from "./components/LeadForm";
 import LeadDetails from "./components/LeadDetails";
 import LeadStatusView from "./components/LeadStatusView";
 
-import AgentDetails from "./components/AgentDetails"; // NEW
 import AgentForm from "./components/AgentForm";
 
 import Reports from "./components/Reports";
 import Navbar from "./components/Navbar";
+import AgentList from "./components/AgentList";
 
 function App() {
   return (
@@ -26,7 +26,7 @@ function App() {
             <Route path="/create-lead" element={<LeadForm />} />
 
             {/* Sales Agent Screens */}
-            <Route path="/agents" element={<AgentDetails />} />
+            <Route path="/agents" element={<AgentList />} />
             <Route path="/create-agent" element={<AgentForm />} />
 
             {/* Other Views  */}
