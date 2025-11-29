@@ -19,7 +19,6 @@ const Navbar = () => {
 
       <div className="collapse navbar-collapse" id="navbarContent">
         <ul className="navbar-nav ms-auto">
-          {/* Leads Section */}
           <li className="nav-item">
             <Link className="nav-link" to="/leads">
               Leads
@@ -38,30 +37,40 @@ const Navbar = () => {
             </Link>
           </li>
 
-          {/* Reports */}
           <li className="nav-item">
             <Link className="nav-link" to="/reports">
               Reports
             </Link>
           </li>
 
-          {/* ---- Agent Section (NO DROPDOWN) ---- */}
-          <li className="nav-item">
-            <Link className="nav-link" to="/agents">
+          {/* ---- Sales Agent Section ---- */}
+          <li className="nav-item dropdown">
+            <span
+              className="nav-link dropdown-toggle"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
               Agents
-            </Link>
-          </li>
+            </span>
+            <ul className="dropdown-menu dropdown-menu-end">
+              <li>
+                <Link className="dropdown-item" to="/agents">
+                  View by Agent
+                </Link>
+              </li>
 
-          <li className="nav-item">
-            <Link className="nav-link" to="/create-agent">
-              Create Agent
-            </Link>
-          </li>
+              <li>
+                <Link className="dropdown-item" to="/create-agent">
+                  Add New Agent
+                </Link>
+              </li>
 
-          <li className="nav-item">
-            <Link className="nav-link" to="/sales-management">
-              Agent Status
-            </Link>
+              <li>
+                <Link className="dropdown-item" to="/sales-management">
+                  Manage Agents
+                </Link>
+              </li>
+            </ul>
           </li>
         </ul>
       </div>
