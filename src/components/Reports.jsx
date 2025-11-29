@@ -14,13 +14,16 @@ import {
   Legend,
 } from "chart.js";
 
+import ChartDataLabels from "chartjs-plugin-datalabels";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
   ArcElement,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels
 );
 
 const Reports = () => {
@@ -93,6 +96,34 @@ const Reports = () => {
     },
   };
 
+  // Pie options with datalabels (value + percentage)
+  const pieOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      datalabels: {
+        display: true,
+        color: "#fff",
+        anchor: "center",
+        align: "center",
+        backgroundColor: "rgba(0,0,0,0.35)",
+        borderRadius: 6,
+        padding: 6,
+        font: {
+          weight: "600",
+          size: 12,
+        },
+        formatter: (value, context) => {
+          if (!value) return ""; // hide label for zero slices
+          const data = context.chart.data.datasets[0].data;
+          const sum = data.reduce((a, b) => a + b, 0);
+          const pct = sum ? ((value / sum) * 100).toFixed(1) : "0.0";
+          return `${value} (${pct}%)`;
+        },
+      },
+    },
+  };
+
   return (
     <div className="px-2 px-sm-3 px-md-0">
       <h2 className="mb-3 mb-sm-4 fw-bold text-primary">
@@ -141,7 +172,7 @@ const Reports = () => {
             <div
               style={{ position: "relative", height: "250px", width: "100%" }}
             >
-              <Pie data={pieData} options={chartOptions} />
+              <Pie data={pieData} options={pieOptions} />
             </div>
           </div>
         </div>
