@@ -66,3 +66,26 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.app-main {
+  /* reserve space for footer height (adjust if footer height changes) */
+  padding-bottom: 80px;
+  background-color: #f8f9fa; /* ensure contrast with footer */
+}
+
+/* ensure footer stays below content visually and text is readable */
+footer[aria-label="Site footer"] {
+  z-index: 10;
+  background: #111827 !important;
+  color: #e5e7eb !important;
+}
+
+/* improve modal/backdrop stacking if used */
+.modal, .modal-backdrop {
+  z-index: 2000;
+}
+
+/* small utility to ensure main content is visible */
+body, #root {
+  height: 100%;
+}

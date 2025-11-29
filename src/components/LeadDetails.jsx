@@ -10,9 +10,13 @@ const LeadDetails = () => {
   const [newComment, setNewComment] = useState("");
   const [status, setStatus] = useState("");
   const [assignedAgent, setAssignedAgent] = useState(""); // added
+  const [source, setSource] = useState(""); // added
+  const [priority, setPriority] = useState(""); // added
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [assigning, setAssigning] = useState(false); // added
+  const [updatingSource, setUpdatingSource] = useState(false); // separate loading for source
+  const [updatingPriority, setUpdatingPriority] = useState(false); // separate loading for priority
 
   // UI messages
   const [message, setMessage] = useState(null);
@@ -33,6 +37,8 @@ const LeadDetails = () => {
         setLead(res.data.data);
         setStatus(res.data.data.status);
         setAssignedAgent(res.data.data.salesAgent?._id || ""); // set current assignment
+        setSource(res.data.data.source); // added
+        setPriority(res.data.data.priority); // added
       } catch (err) {
         setMessage({ type: "danger", text: "Failed to load lead details." });
       } finally {
@@ -201,7 +207,7 @@ const LeadDetails = () => {
             </div>
           </div>
 
-          {/* Status + Assign Card (updated to include agent assign) */}
+          {/* Status + Assign + Source/Priority Card */}
           <div className="card p-3 p-sm-4 shadow-sm border-0 mb-4">
             <h5
               className="fw-semibold mb-3"
@@ -248,7 +254,7 @@ const LeadDetails = () => {
                       Updating...
                     </>
                   ) : (
-                    "✅ Update"
+                    "✅ Update Status"
                   )}
                 </button>
               </div>
@@ -290,9 +296,148 @@ const LeadDetails = () => {
                           Assigning...
                         </>
                       ) : (
-                        "🔁 Assign"
+                        "🔁 Update Agent"
                       )}
                     </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Update Source and Priority row */}
+              <div className="col-12 mt-2">
+                <div className="row g-2 g-sm-3">
+                  {/* Update Source */}
+                  <div className="col-12 mt-4">
+                    <h6 className="mb-2 fw-semibold">📌 Update Source</h6>
+                    <div className="row g-2 align-items-center">
+                      <div className="col-12 col-sm-8">
+                        <select
+                          className="form-select form-select-lg"
+                          value={source}
+                          onChange={(e) => setSource(e.target.value)}
+                          disabled={updatingSource}
+                          style={{
+                            minHeight: "48px",
+                            fontSize: "clamp(14px, 2vw, 16px)",
+                          }}
+                        >
+                          <option value="">-- Select Source --</option>
+                          <option value="Website">💻 Website</option>
+                          <option value="Referral">👥 Referral</option>
+                          <option value="Cold Call">📞 Cold Call</option>
+                          <option value="Social Media">📱 Social Media</option>
+                        </select>
+                      </div>
+                      <div className="col-12 col-sm-4">
+                        <button
+                          className="btn btn-warning w-100 fw-semibold"
+                          onClick={async () => {
+                            if (!source) {
+                              showMessage("danger", "Please select a source.");
+                              return;
+                            }
+                            try {
+                              setUpdatingSource(true);
+                              await api.put(`/leads/${id}`, { source });
+                              // refresh lead
+                              const res = await api.get(`/leads/${id}`);
+                              setLead(res.data.data);
+                              setSource(res.data.data.source);
+                              showMessage(
+                                "success",
+                                "📌 Source updated successfully!"
+                              );
+                            } catch {
+                              showMessage(
+                                "danger",
+                                "❌ Failed to update source."
+                              );
+                            } finally {
+                              setUpdatingSource(false);
+                            }
+                          }}
+                          disabled={updatingSource}
+                          style={{ minHeight: "48px" }}
+                        >
+                          {updatingSource ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                              Updating...
+                            </>
+                          ) : (
+                            "🔄 Update Source"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Update Priority */}
+                  <div className="col-12 mt-4">
+                    <h6 className="mb-2 fw-semibold">⭐ Update Priority</h6>
+                    <div className="row g-2 align-items-center">
+                      <div className="col-12 col-sm-8">
+                        <select
+                          className="form-select form-select-lg"
+                          value={priority}
+                          onChange={(e) => setPriority(e.target.value)}
+                          disabled={updatingPriority}
+                          style={{
+                            minHeight: "48px",
+                            fontSize: "clamp(14px, 2vw, 16px)",
+                          }}
+                        >
+                          <option value="">-- Select Priority --</option>
+                          <option value="Low">🟦 Low</option>
+                          <option value="Medium">🟨 Medium</option>
+                          <option value="High">🟥 High</option>
+                        </select>
+                      </div>
+                      <div className="col-12 col-sm-4">
+                        <button
+                          className="btn btn-info w-100 fw-semibold"
+                          onClick={async () => {
+                            if (!priority) {
+                              showMessage(
+                                "danger",
+                                "Please select a priority."
+                              );
+                              return;
+                            }
+                            try {
+                              setUpdatingPriority(true);
+                              await api.put(`/leads/${id}`, { priority });
+                              // refresh lead
+                              const res = await api.get(`/leads/${id}`);
+                              setLead(res.data.data);
+                              setPriority(res.data.data.priority);
+                              showMessage(
+                                "success",
+                                "⭐ Priority updated successfully!"
+                              );
+                            } catch {
+                              showMessage(
+                                "danger",
+                                "❌ Failed to update priority."
+                              );
+                            } finally {
+                              setUpdatingPriority(false);
+                            }
+                          }}
+                          disabled={updatingPriority}
+                          style={{ minHeight: "48px" }}
+                        >
+                          {updatingPriority ? (
+                            <>
+                              <span className="spinner-border spinner-border-sm me-2"></span>
+                              Updating...
+                            </>
+                          ) : (
+                            "⚙️ Update Priority"
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

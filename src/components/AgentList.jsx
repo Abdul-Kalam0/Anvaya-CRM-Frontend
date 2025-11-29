@@ -7,6 +7,12 @@ const AgentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [message, setMessage] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const fetchAgents = async () => {
@@ -14,7 +20,8 @@ const AgentList = () => {
       const res = await api.get("/agents");
       setAgents(res.data.data.Agents || []);
     } catch (err) {
-      setError("No agents found or failed to fetch data.");
+      console.error("Error fetching agents:", err); // Added logging for debugging
+      setError("⚠️ Failed to fetch agents.");
     } finally {
       setLoading(false);
     }
@@ -25,24 +32,78 @@ const AgentList = () => {
   }, []);
 
   const filteredAgents = agents.filter(
-    (agent) =>
-      agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agent.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (a) =>
+      a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const showMessagePopup = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 2200);
+  };
+
+  const confirmDelete = (id) => {
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    setDeleteLoading(true);
+    try {
+      await api.delete(`/agents/${deleteId}`); // Ensure backend has DELETE /agents/:id
+      showMessagePopup("success", "🗑 Agent deleted successfully!");
+      setShowDeleteModal(false);
+      setDeleteId(null);
+      fetchAgents(); // Refresh the list
+    } catch (err) {
+      console.error("Error deleting agent:", err); // Added logging for debugging
+      // Check if error is due to agent being assigned to leads
+      if (
+        err.response?.status === 400 &&
+        err.response.data?.message?.includes("assigned")
+      ) {
+        showMessagePopup(
+          "danger",
+          "❌ Cannot delete agent assigned to leads. Reassign leads first."
+        );
+      } else {
+        showMessagePopup(
+          "danger",
+          "❌ Failed to delete agent. Please try again."
+        );
+      }
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <div className="px-2 px-sm-3 px-md-0">
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {/* Alert message */}
+        {message && (
+          <div
+            className={`alert alert-${message.type} alert-dismissible fade show mt-3`}
+            role="alert"
+          >
+            {message.text}
+            <button
+              className="btn-close"
+              onClick={() => setMessage(null)}
+            ></button>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="mb-4">
+        <div className="mb-4 mt-3">
           <h2 className="fw-bold text-primary mb-1">🧑‍💼 Sales Agents</h2>
-          <p className="text-muted">
-            Manage and view all sales agents in your team
-          </p>
+          <p className="text-muted">Manage, view, and delete agents</p>
         </div>
 
         {/* Search Bar */}
-        <div className="card p-3 p-sm-4 shadow-sm mb-4 border-0">
+        <div className="card p-3 shadow-sm mb-4 border-0">
           <div className="input-group">
             <span className="input-group-text bg-light border-0">🔍</span>
             <input
@@ -51,163 +112,144 @@ const AgentList = () => {
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                fontSize: "16px",
-                padding: "12px 16px",
-                minHeight: "48px",
-              }}
+              style={{ minHeight: "48px" }}
             />
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="d-flex justify-content-center py-5">
-            <div className="spinner-border text-primary" role="status"></div>
+        {/* Desktop Table */}
+        {!loading && filteredAgents.length > 0 && (
+          <div className="d-none d-md-block">
+            <div className="card shadow-sm border-0 p-3 mb-4">
+              <h5 className="fw-semibold mb-3">📋 Agent List</h5>
+              <table className="table table-hover">
+                <thead className="table-dark">
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th className="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAgents.map((agent) => (
+                    <tr key={agent._id}>
+                      <td>{agent.name}</td>
+                      <td>{agent.email}</td>
+                      <td className="text-center">
+                        <div className="d-flex justify-content-center gap-2">
+                          <button
+                            className="btn btn-sm btn-info"
+                            onClick={() =>
+                              navigate(`/leads?salesAgent=${agent._id}`)
+                            }
+                          >
+                            👁 View Leads
+                          </button>
+
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => confirmDelete(agent._id)}
+                          >
+                            🗑 Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        {/* Error State */}
-        {error && !loading && (
-          <div
-            className="alert alert-warning alert-dismissible fade show mb-4"
-            role="alert"
-          >
-            <strong>⚠️ Warning:</strong> {error}
-            <button
-              type="button"
-              className="btn-close"
-              onClick={() => setError(null)}
-            ></button>
-          </div>
-        )}
+        {/* Mobile Cards */}
+        <div className="d-md-none">
+          {filteredAgents.map((agent) => (
+            <div key={agent._id} className="card shadow-sm border-0 p-3 mb-3">
+              <h6 className="fw-bold">{agent.name}</h6>
+              <p className="text-muted">{agent.email}</p>
 
-        {/* Agents Table/Cards */}
-        {!loading && !error && agents.length > 0 && (
-          <>
-            {/* Desktop Table View */}
-            <div className="d-none d-md-block">
-              <div className="card shadow-sm border-0 p-3 p-sm-4 mb-4">
-                <h5 className="fw-semibold mb-3">📋 Agent List</h5>
-                <div className="table-responsive">
-                  <table className="table table-hover mb-0">
-                    <thead className="table-dark">
-                      <tr>
-                        <th className="fw-semibold">Name</th>
-                        <th className="fw-semibold">Email</th>
-                        <th className="fw-semibold text-center">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAgents.map((agent) => (
-                        <tr key={agent._id} className="align-middle">
-                          <td>
-                            <span className="fw-semibold">{agent.name}</span>
-                          </td>
-                          <td>
-                            <span className="text-muted text-break">
-                              {agent.email}
-                            </span>
-                          </td>
-                          <td className="text-center">
-                            <button
-                              className="btn btn-sm btn-info"
-                              style={{ minHeight: "36px", fontSize: "14px" }}
-                              onClick={() =>
-                                navigate(`/leads?salesAgent=${agent._id}`)
-                              }
-                            >
-                              👁️ View Leads
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="d-grid gap-2">
+                <button
+                  className="btn btn-info"
+                  onClick={() => navigate(`/leads?salesAgent=${agent._id}`)}
+                >
+                  👁 View Leads
+                </button>
+
+                <button
+                  className="btn btn-danger"
+                  onClick={() => confirmDelete(agent._id)}
+                >
+                  🗑 Delete
+                </button>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* Mobile Card View */}
-            <div className="d-md-none">
-              <div className="card shadow-sm border-0 p-3 p-sm-4 mb-4">
-                <h5 className="fw-semibold mb-3">📋 Agent List</h5>
-                {filteredAgents.length === 0 ? (
-                  <p className="text-muted text-center py-4">
-                    No agents match your search.
-                  </p>
-                ) : (
-                  filteredAgents.map((agent) => (
-                    <div
-                      key={agent._id}
-                      className="card mb-3 p-3 border"
-                      style={{
-                        borderLeft: "4px solid #007bff",
-                        borderTopLeftRadius: "0.375rem",
-                        borderBottomLeftRadius: "0.375rem",
-                      }}
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <>
+            <div className="modal-backdrop fade show"></div>
+
+            <div className="modal d-block" tabIndex="-1">
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">⚠ Confirm Delete</h5>
+                    <button
+                      className="btn-close"
+                      onClick={() => setShowDeleteModal(false)}
+                    ></button>
+                  </div>
+                  <div className="modal-body">
+                    <p>
+                      Are you sure you want to delete this agent?
+                      <br />
+                      This action <strong>cannot be undone.</strong>
+                    </p>
+                  </div>
+                  <div className="modal-footer">
+                    <button
+                      className="btn btn-outline-secondary"
+                      onClick={() => setShowDeleteModal(false)}
                     >
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="fw-semibold text-break mb-0">
-                          {agent.name}
-                        </h6>
-                      </div>
-                      <p className="mb-3">
-                        <small className="text-muted d-block mb-1">Email</small>
-                        <span className="text-break">{agent.email}</span>
-                      </p>
-                      <button
-                        className="btn btn-info btn-sm w-100 fw-semibold"
-                        style={{ minHeight: "44px", fontSize: "14px" }}
-                        onClick={() =>
-                          navigate(`/leads?salesAgent=${agent._id}`)
-                        }
-                      >
-                        👁️ View Leads
-                      </button>
-                    </div>
-                  ))
-                )}
+                      Cancel
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={handleDelete}
+                      disabled={deleteLoading}
+                    >
+                      {deleteLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete"
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </>
         )}
 
-        {/* Empty State */}
-        {!loading && !error && agents.length === 0 && (
-          <div className="card p-5 text-center shadow-sm border-0 mb-4">
-            <h5 className="text-muted fw-semibold mb-3">📭 No Agents Found</h5>
-            <p className="text-muted mb-4">
-              There are no sales agents in the system yet. Create one to get
-              started!
-            </p>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="row g-2 mb-4">
+        {/* Bottom Buttons */}
+        <div className="row g-2 mt-3 mb-4">
           <div className="col-12 col-sm-6">
             <button
-              className="btn btn-primary w-100 fw-semibold"
+              className="btn btn-primary w-100"
               onClick={() => navigate("/create-agent")}
-              style={{ minHeight: "48px", fontSize: "16px" }}
             >
               ✨ Add New Agent
             </button>
           </div>
           <div className="col-12 col-sm-6">
-            <Link
-              to="/"
-              className="btn btn-outline-primary w-100 fw-semibold"
-              style={{
-                minHeight: "48px",
-                fontSize: "16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-              }}
-            >
+            <Link className="btn btn-outline-primary w-100" to="/">
               🏠 Back to Dashboard
             </Link>
           </div>

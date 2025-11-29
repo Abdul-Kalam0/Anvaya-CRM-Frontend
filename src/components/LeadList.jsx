@@ -15,6 +15,12 @@ const LeadList = () => {
     inProgress: 0,
   });
 
+  // New states for non-blocking notifications and delete confirmation
+  const [message, setMessage] = useState(null); // { type: 'success'|'danger'|'warning', text: string }
+  const [deletingId, setDeletingId] = useState(null); // id pending confirmation
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // popup modal flag
+
   const fetchLeads = async () => {
     try {
       setLoading(true);
@@ -28,7 +34,6 @@ const LeadList = () => {
         setLeads(res.data.leads);
         setErrorMessage(null);
 
-        // Calculate stats
         const totalLeads = res.data.leads.length;
         const newLeads = res.data.leads.filter(
           (l) => l.status === "New"
@@ -56,6 +61,7 @@ const LeadList = () => {
 
   useEffect(() => {
     fetchLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleFilter = (key, value) => {
@@ -69,6 +75,41 @@ const LeadList = () => {
     setSearchParams({});
     setErrorMessage(null);
     setShowFilters(false);
+  };
+
+  // notification helper
+  const showMessage = (type, text, timeout = 2500) => {
+    setMessage({ type, text });
+    if (timeout) {
+      setTimeout(() => setMessage(null), timeout);
+    }
+  };
+
+  // when user clicks Delete button: open modal popup for confirmation
+  const requestDelete = (id) => {
+    setDeletingId(id);
+    setShowDeleteModal(true);
+  };
+
+  const cancelDelete = () => {
+    setDeletingId(null);
+    setShowDeleteModal(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
+    setDeleteInProgress(true);
+    try {
+      await api.delete(`/leads/${deletingId}`);
+      setDeletingId(null);
+      setShowDeleteModal(false);
+      showMessage("success", "Lead deleted successfully.");
+      await fetchLeads();
+    } catch (err) {
+      showMessage("danger", "Failed to delete lead. Please try again.");
+    } finally {
+      setDeleteInProgress(false);
+    }
   };
 
   return (
@@ -89,6 +130,95 @@ const LeadList = () => {
           Welcome to Anvaya CRM - Manage your leads efficiently
         </p>
       </div>
+
+      {/* Inline notification */}
+      {message && (
+        <div
+          className={`alert alert-${message.type} alert-dismissible fade show mb-3`}
+          role="alert"
+        >
+          <span className="fw-semibold">{message.text}</span>
+          <button
+            type="button"
+            className="btn-close"
+            onClick={() => setMessage(null)}
+            aria-label="Close"
+          />
+        </div>
+      )}
+
+      {/* modal popup for delete confirmation */}
+      {showDeleteModal && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="modal-backdrop fade show"
+            onClick={cancelDelete}
+            style={{ zIndex: 1040 }}
+          ></div>
+
+          {/* Modal */}
+          <div
+            className="modal d-block"
+            tabIndex="-1"
+            role="dialog"
+            aria-modal="true"
+            style={{ zIndex: 1050 }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") cancelDelete();
+            }}
+          >
+            <div className="modal-dialog modal-dialog-centered" role="document">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h5 className="modal-title">Confirm Delete</h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label="Close"
+                    onClick={cancelDelete}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="mb-0">
+                    Are you sure you want to delete lead{" "}
+                    <strong>{deletingId}</strong>? This action cannot be undone.
+                  </p>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={cancelDelete}
+                    disabled={deleteInProgress}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={confirmDelete}
+                    disabled={deleteInProgress}
+                  >
+                    {deleteInProgress ? (
+                      <>
+                        <span
+                          className="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true"
+                        />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Stats Cards */}
       {!loading && leads.length > 0 && (
@@ -260,7 +390,7 @@ const LeadList = () => {
       )}
 
       {/* Desktop Table View */}
-      {!loading && !errorMessage && (
+      {!loading && !errorMessage && leads.length > 0 && (
         <>
           <div className="d-none d-md-block">
             <div className="card border-0 shadow-sm p-0 mb-4">
@@ -311,13 +441,42 @@ const LeadList = () => {
                           </span>
                         </td>
                         <td className="text-center">
-                          <Link
-                            className="btn btn-primary btn-sm fw-semibold"
-                            to={`/leads/${lead._id}`}
-                            style={{ minHeight: "36px" }}
-                          >
-                            👁️ View
-                          </Link>
+                          <div className="d-flex justify-content-center gap-2">
+                            <Link
+                              to={`/leads/${lead._id}`}
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: "600",
+                                borderRadius: "10px",
+                                padding: "8px 12px",
+                                background: "#007bff",
+                                color: "white",
+                                textDecoration: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                minWidth: "90px",
+                                textAlign: "center",
+                              }}
+                            >
+                              👁️ View
+                            </Link>
+                            <button
+                              onClick={() => requestDelete(lead._id)}
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: "600",
+                                borderRadius: "10px",
+                                padding: "8px 12px",
+                                background: "#dc3545",
+                                color: "white",
+                                border: "none",
+                                cursor: "pointer",
+                                minWidth: "90px",
+                              }}
+                            >
+                              🗑 Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -377,13 +536,41 @@ const LeadList = () => {
                   </div>
                 </div>
 
-                <Link
-                  className="btn btn-primary btn-sm w-100 fw-semibold mt-3"
-                  to={`/leads/${lead._id}`}
-                  style={{ minHeight: "44px" }}
-                >
-                  👁️ View Details
-                </Link>
+                <div className="d-flex gap-2 mt-3">
+                  <Link
+                    to={`/leads/${lead._id}`}
+                    style={{
+                      flex: 1,
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                      background: "#007bff",
+                      color: "white",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    👁️ View
+                  </Link>
+                  <button
+                    onClick={() => requestDelete(lead._id)}
+                    style={{
+                      flex: 1,
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      borderRadius: "10px",
+                      padding: "10px 12px",
+                      background: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    🗑 Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -12,6 +12,7 @@ import AgentForm from "./components/AgentForm";
 import Reports from "./components/Reports";
 import Navbar from "./components/Navbar";
 import SalesAgentView from "./components/SalesAgentView";
+import Footer from "./components/Footer";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           </Routes>
         </div>
       </div>
+      <Footer />
     </Router>
   );
 }
