@@ -181,8 +181,9 @@ const LeadList = () => {
                 </div>
                 <div className="modal-body">
                   <p className="mb-0">
-                    Are you sure you want to delete lead{" "}
-                    <strong>{deletingId}</strong>? This action cannot be undone.
+                    Are you sure you want to delete this agent?
+                    <br />
+                    This action <strong>cannot be undone.</strong>
                   </p>
                 </div>
                 <div className="modal-footer">
