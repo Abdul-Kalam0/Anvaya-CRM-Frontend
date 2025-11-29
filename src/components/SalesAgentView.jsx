@@ -10,6 +10,7 @@ const SalesAgentView = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [sortOption, setSortOption] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -55,14 +56,18 @@ const SalesAgentView = () => {
   }, [selectedAgent, statusFilter, priorityFilter, sortOption, leads]);
 
   return (
-    <div>
-      <h2 className="fw-bold mb-3 text-primary">📌 Leads by Sales Agent</h2>
+    <div className="px-2 px-sm-3 px-md-0">
+      <h2 className="fw-bold mb-3 mb-sm-4 text-primary">
+        📌 Leads by Sales Agent
+      </h2>
 
       {/* Agent Selector */}
       <div className="mb-4">
-        <label className="fw-semibold mb-2">Select Sales Agent</label>
+        <label className="form-label fw-semibold mb-2">
+          Select Sales Agent
+        </label>
         <select
-          className="form-select"
+          className="form-select form-select-lg"
           onChange={(e) => setSelectedAgent(e.target.value)}
         >
           <option value="">-- Select an Agent --</option>
@@ -76,13 +81,27 @@ const SalesAgentView = () => {
 
       {selectedAgent && (
         <>
+          {/* Filter Toggle - Mobile Only */}
+          <div className="d-md-none mb-3">
+            <button
+              className="btn btn-outline-primary w-100"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </button>
+          </div>
+
           {/* Filter Section */}
-          <div className="card p-3 mb-3 shadow-sm">
-            <h5 className="fw-semibold">Filters</h5>
-            <div className="row g-3 mt-2">
-              <div className="col-md-4">
+          <div
+            className={`card p-3 p-sm-4 mb-4 shadow-sm ${
+              !showFilters ? "d-none d-md-block" : ""
+            }`}
+          >
+            <h5 className="fw-semibold mb-3">Filters</h5>
+            <div className="row g-2 g-md-3">
+              <div className="col-12 col-md-4">
                 <select
-                  className="form-select"
+                  className="form-select form-select-sm"
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="">Filter by Status</option>
@@ -94,9 +113,9 @@ const SalesAgentView = () => {
                 </select>
               </div>
 
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <select
-                  className="form-select"
+                  className="form-select form-select-sm"
                   onChange={(e) => setPriorityFilter(e.target.value)}
                 >
                   <option value="">Filter by Priority</option>
@@ -106,9 +125,9 @@ const SalesAgentView = () => {
                 </select>
               </div>
 
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <select
-                  className="form-select"
+                  className="form-select form-select-sm"
                   onChange={(e) => setSortOption(e.target.value)}
                 >
                   <option value="">Sort by</option>
@@ -119,37 +138,95 @@ const SalesAgentView = () => {
           </div>
 
           {/* Lead List */}
-          <div className="card p-3 shadow-sm">
-            <h5 className="fw-semibold">Leads Assigned</h5>
+          <div className="card p-3 p-sm-4 shadow-sm">
+            <h5 className="fw-semibold mb-3">Leads Assigned</h5>
 
             {filteredLeads.length === 0 ? (
               <p className="text-muted text-center mt-3">
                 No leads match the selected filters.
               </p>
             ) : (
-              <ul className="list-group mt-3">
-                {filteredLeads.map((lead) => (
-                  <li
-                    key={lead._id}
-                    className="list-group-item d-flex justify-content-between align-items-center"
-                  >
-                    <div>
-                      <strong>{lead.name}</strong> —
-                      <span className="text-primary"> {lead.status}</span>
-                      <span className="badge bg-warning ms-2">
-                        {lead.priority}
-                      </span>
-                    </div>
+              <>
+                {/* Desktop Table View */}
+                <div className="d-none d-md-block table-responsive">
+                  <table className="table table-hover">
+                    <thead className="table-dark">
+                      <tr>
+                        <th>Lead Name</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th className="text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLeads.map((lead) => (
+                        <tr key={lead._id}>
+                          <td className="fw-semibold">{lead.name}</td>
+                          <td>{lead.status}</td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                lead.priority === "High"
+                                  ? "bg-danger"
+                                  : lead.priority === "Medium"
+                                  ? "bg-warning text-dark"
+                                  : "bg-secondary"
+                              }`}
+                            >
+                              {lead.priority}
+                            </span>
+                          </td>
+                          <td className="text-center">
+                            <Link
+                              to={`/leads/${lead._id}`}
+                              className="btn btn-sm btn-primary"
+                            >
+                              View
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-                    <Link
-                      to={`/leads/${lead._id}`}
-                      className="btn btn-sm btn-outline-primary"
-                    >
-                      View Details
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+                {/* Mobile Card View */}
+                <div className="d-md-none">
+                  {filteredLeads.map((lead) => (
+                    <div key={lead._id} className="card mb-3 p-3">
+                      <h6 className="fw-semibold mb-2 text-break">
+                        {lead.name}
+                      </h6>
+                      <p className="mb-2">
+                        <small className="text-muted">Status:</small>
+                        <span className="badge bg-info ms-2">
+                          {lead.status}
+                        </span>
+                      </p>
+                      <p className="mb-3">
+                        <small className="text-muted">Priority:</small>
+                        <span
+                          className={`badge ms-2 ${
+                            lead.priority === "High"
+                              ? "bg-danger"
+                              : lead.priority === "Medium"
+                              ? "bg-warning text-dark"
+                              : "bg-secondary"
+                          }`}
+                        >
+                          {lead.priority}
+                        </span>
+                      </p>
+                      <Link
+                        to={`/leads/${lead._id}`}
+                        className="btn btn-primary btn-sm w-100"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </>

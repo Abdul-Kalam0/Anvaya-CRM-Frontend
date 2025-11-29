@@ -18,8 +18,8 @@ function App() {
     <Router>
       <Navbar />
 
-      <div className="container mt-4">
-        <div className="card shadow-sm p-4">
+      <div className="container-fluid px-2 px-sm-3 px-md-4 mt-2 mt-sm-3 mt-md-4">
+        <div className="card shadow-sm p-3 p-sm-4">
           <Routes>
             <Route path="/" element={<LeadList />} />
             <Route path="/leads" element={<LeadList />} />

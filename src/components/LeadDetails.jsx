@@ -77,7 +77,7 @@ const LeadDetails = () => {
     );
 
   return (
-    <div className="card p-4 shadow-sm">
+    <div className="card p-3 p-sm-4 shadow-sm">
       {/* Status Message */}
       {message && (
         <div className={`alert alert-${message.type} text-center`} role="alert">
@@ -85,25 +85,36 @@ const LeadDetails = () => {
         </div>
       )}
 
-      <h2 className="fw-bold">{lead.name}</h2>
-      <p>
-        <strong>Source:</strong> {lead.source}
-      </p>
-      <p>
-        <strong>Priority:</strong> {lead.priority}
-      </p>
+      <h2 className="fw-bold mb-3">{lead.name}</h2>
 
-      <p>
-        <strong>Assigned Agent:</strong>{" "}
-        <span className="badge bg-dark">
-          {lead.salesAgent?.name || "Not Assigned"}
-        </span>
-      </p>
+      {/* Lead Info Grid */}
+      <div className="row g-2 mb-4">
+        <div className="col-12 col-sm-6">
+          <p className="mb-2">
+            <strong>Source:</strong>{" "}
+            <span className="text-break">{lead.source}</span>
+          </p>
+        </div>
+        <div className="col-12 col-sm-6">
+          <p className="mb-2">
+            <strong>Priority:</strong>{" "}
+            <span className="text-break">{lead.priority}</span>
+          </p>
+        </div>
+        <div className="col-12">
+          <p className="mb-0">
+            <strong>Assigned Agent:</strong>{" "}
+            <span className="badge bg-dark">
+              {lead.salesAgent?.name || "Not Assigned"}
+            </span>
+          </p>
+        </div>
+      </div>
 
       {/* Status Update */}
-      <div className="mt-4">
-        <label className="form-label fw-semibold">Update Status</label>
-        <div className="input-group">
+      <div className="mt-4 mb-4">
+        <label className="form-label fw-semibold mb-2">Update Status</label>
+        <div className="input-group gap-2 flex-column flex-sm-row">
           <select
             className="form-select"
             value={status}
@@ -115,14 +126,18 @@ const LeadDetails = () => {
             <option value="Proposal Sent">Proposal Sent</option>
             <option value="Closed">Closed</option>
           </select>
-          <button className="btn btn-success" onClick={handleStatusUpdate}>
+          <button
+            className="btn btn-success fw-semibold"
+            onClick={handleStatusUpdate}
+            style={{ minHeight: "44px" }}
+          >
             Update
           </button>
         </div>
       </div>
 
-      {/* Comments */}
-      <h4 className="mt-4">Comments</h4>
+      {/* Comments Section */}
+      <h4 className="mt-4 mb-3">Comments</h4>
 
       <ul className="list-group mb-3">
         {comments.length === 0 ? (
@@ -131,10 +146,10 @@ const LeadDetails = () => {
           </li>
         ) : (
           comments.map((c) => (
-            <li className="list-group-item" key={c.id || c._id}>
-              <strong>{c.author}</strong>: {c.commentText}
-              <br />
-              <small className="text-muted">
+            <li className="list-group-item p-2 p-sm-3" key={c.id || c._id}>
+              <strong className="text-break">{c.author}</strong>:
+              <div className="text-break mt-1">{c.commentText}</div>
+              <small className="text-muted d-block mt-2">
                 {new Date(c.createdAt).toLocaleString()}
               </small>
             </li>
@@ -147,9 +162,15 @@ const LeadDetails = () => {
         placeholder="Write a comment..."
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
+        style={{ minHeight: "100px" }}
+        rows="4"
       ></textarea>
 
-      <button className="btn btn-primary w-100" onClick={handleAddComment}>
+      <button
+        className="btn btn-primary w-100 fw-semibold"
+        onClick={handleAddComment}
+        style={{ minHeight: "44px" }}
+      >
         Add Comment
       </button>
     </div>

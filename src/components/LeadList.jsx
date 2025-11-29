@@ -7,6 +7,7 @@ const LeadList = () => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchLeads = async () => {
     try {
@@ -47,25 +48,41 @@ const LeadList = () => {
   const resetFilters = () => {
     setSearchParams({});
     setErrorMessage(null);
+    setShowFilters(false);
   };
 
   return (
-    <div>
+    <div className="px-2 px-sm-3 px-md-0">
       <h2 className="mb-3 fw-bold">Leads</h2>
 
-      <div className="card p-3 mb-4 shadow-sm">
-        <div className="row g-3">
-          <div className="col-md-3">
+      {/* Filter Toggle Button - Mobile Only */}
+      <div className="d-md-none mb-3">
+        <button
+          className="btn btn-outline-primary w-100"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </button>
+      </div>
+
+      {/* Filters Card */}
+      <div
+        className={`card p-3 mb-4 shadow-sm ${
+          !showFilters ? "d-none d-md-block" : ""
+        }`}
+      >
+        <div className="row g-2 g-md-3">
+          <div className="col-12 col-md-3">
             <input
-              className="form-control"
+              className="form-control form-control-sm"
               placeholder="Filter by Agent ID"
               onChange={(e) => handleFilter("salesAgent", e.target.value)}
             />
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-md-3">
             <select
-              className="form-select"
+              className="form-select form-select-sm"
               onChange={(e) => handleFilter("status", e.target.value)}
             >
               <option value="">All Status</option>
@@ -77,17 +94,17 @@ const LeadList = () => {
             </select>
           </div>
 
-          <div className="col-md-3">
+          <div className="col-12 col-md-3">
             <input
-              className="form-control"
+              className="form-control form-control-sm"
               placeholder="Filter by tags"
               onChange={(e) => handleFilter("tags", e.target.value)}
             />
           </div>
 
-          <div className="col-md-2">
+          <div className="col-12 col-md-2">
             <select
-              className="form-select"
+              className="form-select form-select-sm"
               onChange={(e) => handleFilter("source", e.target.value)}
             >
               <option value="">All Sources</option>
@@ -98,9 +115,9 @@ const LeadList = () => {
             </select>
           </div>
 
-          <div className="col-md-1 d-flex align-items-center">
+          <div className="col-12 col-md-1 d-flex">
             <button
-              className="btn btn-outline-danger w-100"
+              className="btn btn-outline-danger w-100 btn-sm"
               onClick={resetFilters}
             >
               Reset
@@ -122,35 +139,66 @@ const LeadList = () => {
         <div className="alert alert-warning text-center">{errorMessage}</div>
       )}
 
-      {/* Table */}
+      {/* Desktop Table View */}
       {!loading && !errorMessage && (
-        <table className="table table-hover">
-          <thead className="table-dark">
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Agent</th>
-              <th className="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          <div className="d-none d-md-block table-responsive">
+            <table className="table table-hover">
+              <thead className="table-dark">
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Agent</th>
+                  <th className="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map((lead) => (
+                  <tr key={lead._id}>
+                    <td className="fw-semibold">{lead.name}</td>
+                    <td>{lead.status}</td>
+                    <td>{lead.salesAgent?.name || "Unassigned"}</td>
+                    <td className="text-center">
+                      <Link
+                        className="btn btn-primary btn-sm"
+                        to={`/leads/${lead._id}`}
+                      >
+                        View Details
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="d-md-none">
             {leads.map((lead) => (
-              <tr key={lead._id}>
-                <td className="fw-semibold">{lead.name}</td>
-                <td>{lead.status}</td>
-                <td>{lead.salesAgent?.name || "Unassigned"}</td>
-                <td className="text-center">
+              <div key={lead._id} className="card mb-3 shadow-sm">
+                <div className="card-body p-3">
+                  <h6 className="card-title fw-semibold mb-2">{lead.name}</h6>
+                  <p className="mb-2">
+                    <small className="text-muted">Status:</small>{" "}
+                    <span className="badge bg-info">{lead.status}</span>
+                  </p>
+                  <p className="mb-3">
+                    <small className="text-muted">Agent:</small>{" "}
+                    <span className="d-block">
+                      {lead.salesAgent?.name || "Unassigned"}
+                    </span>
+                  </p>
                   <Link
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-primary btn-sm w-100"
                     to={`/leads/${lead._id}`}
                   >
                     View Details
                   </Link>
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </>
       )}
     </div>
   );

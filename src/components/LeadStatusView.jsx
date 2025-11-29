@@ -41,8 +41,8 @@ const LeadStatusView = () => {
     );
 
   return (
-    <div>
-      <h2 className="mb-4 fw-bold text-primary">📌 Leads by Status</h2>
+    <div className="px-2 px-sm-3 px-md-0">
+      <h2 className="mb-3 mb-sm-4 fw-bold text-primary">📌 Leads by Status</h2>
 
       {/* Error Message */}
       {error && (
@@ -58,48 +58,52 @@ const LeadStatusView = () => {
         </div>
       )}
 
-      {/* Status Groups */}
-      {Object.keys(groupedLeads).map((status) => (
-        <div className="card p-3 mb-4 shadow-sm border-0" key={status}>
-          <h4 className="text-secondary border-bottom pb-2 fw-semibold">
-            {status}
-          </h4>
+      {/* Status Groups - Responsive Grid */}
+      <div className="row g-3">
+        {Object.keys(groupedLeads).map((status) => (
+          <div className="col-12 col-lg-6" key={status}>
+            <div className="card p-3 p-sm-4 shadow-sm border-0 h-100">
+              <h5 className="text-secondary border-bottom pb-2 fw-semibold mb-3">
+                {status}
+              </h5>
 
-          {/* If no leads for status */}
-          {groupedLeads[status].length === 0 ? (
-            <p className="text-muted mt-2">No leads exist under this status.</p>
-          ) : (
-            <ul className="list-group mt-2">
-              {groupedLeads[status].map((lead) => (
-                <li
-                  className="list-group-item d-flex justify-content-between align-items-center"
-                  key={lead._id}
-                >
-                  <div>
-                    <strong>{lead.name}</strong>
-                    <br />
-                    <small className="text-muted">
-                      Agent: {lead.salesAgent?.name || "Not Assigned"}
-                    </small>
-                  </div>
+              {/* If no leads for status */}
+              {groupedLeads[status].length === 0 ? (
+                <p className="text-muted">No leads exist under this status.</p>
+              ) : (
+                <ul className="list-group list-group-flush">
+                  {groupedLeads[status].map((lead) => (
+                    <li
+                      className="list-group-item px-0 py-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-sm-items-center"
+                      key={lead._id}
+                    >
+                      <div className="flex-grow-1 mb-2 mb-sm-0">
+                        <strong className="text-break">{lead.name}</strong>
+                        <br />
+                        <small className="text-muted">
+                          Agent: {lead.salesAgent?.name || "Not Assigned"}
+                        </small>
+                      </div>
 
-                  <span
-                    className={`badge ${
-                      lead.priority === "High"
-                        ? "bg-danger"
-                        : lead.priority === "Medium"
-                        ? "bg-warning text-dark"
-                        : "bg-secondary"
-                    }`}
-                  >
-                    {lead.priority}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ))}
+                      <span
+                        className={`badge ${
+                          lead.priority === "High"
+                            ? "bg-danger"
+                            : lead.priority === "Medium"
+                            ? "bg-warning text-dark"
+                            : "bg-secondary"
+                        }`}
+                      >
+                        {lead.priority}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

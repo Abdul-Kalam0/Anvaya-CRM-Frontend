@@ -63,54 +63,63 @@ const AgentForm = () => {
 
   return (
     <div
+      className="w-100"
       style={{
         maxWidth: "420px",
-        margin: "20px auto",
+        margin: "12px auto",
+        padding: "0 12px",
       }}
     >
-      <div className="card p-4 shadow-sm">
-        <h3 className="mb-3 fw-bold">Create Sales Agent</h3>
+      <div className="card p-3 p-sm-4 shadow-sm">
+        <h3 className="mb-3 fw-bold text-start">Create Sales Agent</h3>
 
         {/* Status Message */}
         {message && (
-          <div className={`alert alert-${message.type} text-center`}>
+          <div className={`alert alert-${message.type} text-center mb-3`}>
             {message.text}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label className="fw-semibold">Name</label>
+            <label className="form-label fw-semibold">Name</label>
             <input
-              className="form-control"
+              className={`form-control form-control-lg ${
+                errors.name ? "is-invalid" : ""
+              }`}
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
+              placeholder="Enter agent name"
             />
             {errors.name && (
-              <div className="text-danger small mt-1">{errors.name}</div>
+              <div className="invalid-feedback d-block">{errors.name}</div>
             )}
           </div>
 
-          <div className="mb-3">
-            <label className="fw-semibold">Email</label>
+          <div className="mb-4">
+            <label className="form-label fw-semibold">Email</label>
             <input
-              className="form-control"
+              className={`form-control form-control-lg ${
+                errors.email ? "is-invalid" : ""
+              }`}
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter agent email"
             />
             {errors.email && (
-              <div className="text-danger small mt-1">{errors.email}</div>
+              <div className="invalid-feedback d-block">{errors.email}</div>
             )}
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary w-100"
+            className="btn btn-primary w-100 py-2 fw-semibold"
             disabled={loading}
+            style={{ minHeight: "44px" }}
           >
             {loading ? "Creating..." : "Create Agent"}
           </button>
