@@ -11,28 +11,6 @@ const Footer = () => {
         <span className="fw-semibold small">
           © {year} Anvaya CRM. All Rights Reserved.{" "}
         </span>
-
-        {/* Right side links */}
-        <div className="d-flex gap-4 small">
-          <Link
-            to=""
-            className="text-decoration-none text-light text-opacity-75"
-          >
-            Privacy
-          </Link>
-          <Link
-            to=""
-            className="text-decoration-none text-light text-opacity-75"
-          >
-            Terms
-          </Link>
-          <Link
-            to=""
-            className="text-decoration-none text-light text-opacity-75"
-          >
-            Contact
-          </Link>
-        </div>
       </div>
     </footer>
   );
