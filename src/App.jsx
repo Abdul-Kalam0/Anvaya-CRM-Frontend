@@ -29,7 +29,7 @@ function App() {
             {/* Sales Agent Screens */}
             <Route path="/agents" element={<AgentList />} />
             <Route path="/create-agent" element={<AgentForm />} />
-            <Route path="/sales-management" element={<SalesAgentView />} />
+            {/* <Route path="/sales-management" element={<SalesAgentView />} /> */}
 
             {/* Other Views */}
             <Route path="/status" element={<LeadStatusView />} />
