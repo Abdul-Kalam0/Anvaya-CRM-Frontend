@@ -11,6 +11,7 @@ import AgentForm from "./components/AgentForm";
 
 import Reports from "./components/Reports";
 import Navbar from "./components/Navbar";
+import SalesAgentView from "./components/SalesAgentView";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             {/* Sales Agent Screens */}
             <Route path="/agents" element={<AgentList />} />
             <Route path="/create-agent" element={<AgentForm />} />
+            <Route path="/sales-management" element={<SalesAgentView />} />
 
             {/* Other Views */}
             <Route path="/status" element={<LeadStatusView />} />

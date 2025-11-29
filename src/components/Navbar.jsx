@@ -40,7 +40,7 @@ const Navbar = () => {
 
           <li className="nav-item">
             <NavLink className="nav-link" to="/status">
-              By Status
+              Leads Status
             </NavLink>
           </li>
 
@@ -48,6 +48,12 @@ const Navbar = () => {
             <NavLink className="nav-link" to="/agents">
               Sales Agents
             </NavLink>
+          </li>
+
+          <li className="nav-item">
+            <Link className="nav-link" to="/sales-management">
+              Agents Status
+            </Link>
           </li>
 
           <li className="nav-item">

@@ -25,7 +25,7 @@ const AgentList = () => {
 
   return (
     <div className="container mt-4">
-      <h2 className="fw-bold text-center mb-4">🧑‍💼 Sales Agent Management</h2>
+      <h2 className="fw-bold text-center mb-4">🧑‍💼 Sales Agents</h2>
 
       {/* Sidebar + Content Layout */}
       <div className="row">
