@@ -6,7 +6,7 @@ import LeadForm from "./components/LeadForm";
 import LeadDetails from "./components/LeadDetails";
 import LeadStatusView from "./components/LeadStatusView";
 
-import SalesAgentManagement from "./components/SalesAgentManagement"; // NEW
+import AgentDetails from "./components/AgentDetails"; // NEW
 import AgentForm from "./components/AgentForm";
 
 import Reports from "./components/Reports";
@@ -26,7 +26,7 @@ function App() {
             <Route path="/create-lead" element={<LeadForm />} />
 
             {/* Sales Agent Screens */}
-            <Route path="/agents" element={<SalesAgentManagement />} />
+            <Route path="/agents" element={<AgentDetails />} />
             <Route path="/create-agent" element={<AgentForm />} />
 
             {/* Other Views  */}
