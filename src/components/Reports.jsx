@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Bar, Pie } from "react-chartjs-2";
+import { Link } from "react-router-dom";
 import api from "../utils/api";
 
 // Register Chart.js Dependencies
@@ -147,7 +148,7 @@ const Reports = () => {
       </div>
 
       {/* Table */}
-      <div className="card shadow-sm p-3 p-sm-4 border-0">
+      <div className="card shadow-sm p-3 p-sm-4 border-0 mb-4">
         <h6 className="fw-semibold text-dark mb-3">
           🧾 Closed Leads Breakdown
         </h6>
@@ -205,6 +206,24 @@ const Reports = () => {
             ))
           )}
         </div>
+      </div>
+
+      {/* Back to Dashboard Button */}
+      <div className="mb-4">
+        <Link
+          to="/"
+          className="btn btn-outline-primary w-100 fw-semibold"
+          style={{
+            minHeight: "48px",
+            fontSize: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          🏠 Back to Dashboard
+        </Link>
       </div>
     </div>
   );

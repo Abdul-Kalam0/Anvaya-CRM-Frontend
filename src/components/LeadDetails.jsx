@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import api from "../utils/api";
 
 const LeadDetails = () => {
   const { id } = useParams();
   const [lead, setLead] = useState(null);
+  const [agents, setAgents] = useState([]); // ...existing code...
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [status, setStatus] = useState("");
+  const [assignedAgent, setAssignedAgent] = useState(""); // added
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [assigning, setAssigning] = useState(false); // added
 
   // UI messages
   const [message, setMessage] = useState(null);
@@ -28,6 +32,7 @@ const LeadDetails = () => {
         const res = await api.get(`/leads/${id}`);
         setLead(res.data.data);
         setStatus(res.data.data.status);
+        setAssignedAgent(res.data.data.salesAgent?._id || ""); // set current assignment
       } catch (err) {
         setMessage({ type: "danger", text: "Failed to load lead details." });
       } finally {
@@ -35,8 +40,18 @@ const LeadDetails = () => {
       }
     };
 
+    const fetchAgents = async () => {
+      try {
+        const res = await api.get("/agents");
+        setAgents(res.data.data?.Agents || []);
+      } catch {
+        setAgents([]);
+      }
+    };
+
     fetchLead();
     fetchComments();
+    fetchAgents(); // fetch list of agents for assign select
   }, [id]);
 
   const showMessage = (type, text) => {
@@ -46,10 +61,41 @@ const LeadDetails = () => {
 
   const handleStatusUpdate = async () => {
     try {
+      setUpdating(true);
       await api.put(`/leads/${id}`, { status });
-      showMessage("success", "Status updated successfully!");
+      await (async () => {
+        // refresh lead to reflect status change
+        const res = await api.get(`/leads/${id}`);
+        setLead(res.data.data);
+        setStatus(res.data.data.status);
+      })();
+      showMessage("success", "✅ Status updated successfully!");
     } catch {
-      showMessage("danger", "Failed to update status.");
+      showMessage("danger", "❌ Failed to update status.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // New: assign agent handler
+  const handleAssignAgent = async () => {
+    if (!assignedAgent) {
+      showMessage("danger", "Select an agent to assign.");
+      return;
+    }
+
+    try {
+      setAssigning(true);
+      await api.put(`/leads/${id}`, { salesAgent: assignedAgent });
+      // refresh lead to reflect assigned agent
+      const res = await api.get(`/leads/${id}`);
+      setLead(res.data.data);
+      setAssignedAgent(res.data.data.salesAgent?._id || "");
+      showMessage("success", "✅ Assigned agent updated!");
+    } catch {
+      showMessage("danger", "❌ Failed to assign agent.");
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -63,9 +109,9 @@ const LeadDetails = () => {
       await api.post(`/leads/${id}/comments`, { commentText: newComment });
       setNewComment("");
       fetchComments();
-      showMessage("success", "Comment added!");
+      showMessage("success", "✅ Comment added!");
     } catch {
-      showMessage("danger", "Failed to add comment.");
+      showMessage("danger", "❌ Failed to add comment.");
     }
   };
 
@@ -77,102 +123,281 @@ const LeadDetails = () => {
     );
 
   return (
-    <div className="card p-3 p-sm-4 shadow-sm">
-      {/* Status Message */}
-      {message && (
-        <div className={`alert alert-${message.type} text-center`} role="alert">
-          {message.text}
-        </div>
-      )}
+    <div className="container-fluid py-3 py-sm-4">
+      <div className="row">
+        <div className="col-12 col-lg-10 mx-lg-auto">
+          {/* Status Message */}
+          {message && (
+            <div
+              className={`alert alert-${message.type} alert-dismissible fade show mb-4`}
+              role="alert"
+            >
+              <span className="fw-semibold">{message.text}</span>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setMessage(null)}
+                aria-label="Close"
+              ></button>
+            </div>
+          )}
 
-      <h2 className="fw-bold mb-3">{lead.name}</h2>
+          {/* Header Card */}
+          <div className="card p-3 p-sm-4 shadow-sm border-0 mb-4">
+            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-3 gap-2">
+              <div className="flex-grow-1">
+                <h2
+                  className="fw-bold text-primary mb-1"
+                  style={{ fontSize: "clamp(1.5rem, 5vw, 2rem)" }}
+                >
+                  📋 {lead.name}
+                </h2>
+                <p
+                  className="text-muted mb-0"
+                  style={{ fontSize: "clamp(12px, 2vw, 14px)" }}
+                >
+                  Lead ID: {id}
+                </p>
+              </div>
+            </div>
 
-      {/* Lead Info Grid */}
-      <div className="row g-2 mb-4">
-        <div className="col-12 col-sm-6">
-          <p className="mb-2">
-            <strong>Source:</strong>{" "}
-            <span className="text-break">{lead.source}</span>
-          </p>
-        </div>
-        <div className="col-12 col-sm-6">
-          <p className="mb-2">
-            <strong>Priority:</strong>{" "}
-            <span className="text-break">{lead.priority}</span>
-          </p>
-        </div>
-        <div className="col-12">
-          <p className="mb-0">
-            <strong>Assigned Agent:</strong>{" "}
-            <span className="badge bg-dark">
-              {lead.salesAgent?.name || "Not Assigned"}
-            </span>
-          </p>
+            {/* Lead Info Grid */}
+            <div className="row g-2 g-sm-3">
+              <div className="col-12 col-sm-6 col-md-3">
+                <small className="text-muted d-block mb-1">Source</small>
+                <span
+                  className="fw-semibold"
+                  style={{ fontSize: "clamp(13px, 2vw, 15px)" }}
+                >
+                  {lead.source}
+                </span>
+              </div>
+              <div className="col-12 col-sm-6 col-md-3">
+                <small className="text-muted d-block mb-1">Priority</small>
+                <span
+                  className={`badge ${
+                    lead.priority === "High"
+                      ? "bg-danger"
+                      : lead.priority === "Medium"
+                      ? "bg-warning text-dark"
+                      : "bg-secondary"
+                  }`}
+                >
+                  {lead.priority}
+                </span>
+              </div>
+              <div className="col-12 col-sm-6 col-md-3">
+                <small className="text-muted d-block mb-1">Status</small>
+                <span className="badge bg-info">{lead.status}</span>
+              </div>
+              <div className="col-12 col-sm-6 col-md-3">
+                <small className="text-muted d-block mb-1">
+                  Assigned Agent
+                </small>
+                <span className="badge bg-dark">
+                  {lead.salesAgent?.name || "Not Assigned"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Status + Assign Card (updated to include agent assign) */}
+          <div className="card p-3 p-sm-4 shadow-sm border-0 mb-4">
+            <h5
+              className="fw-semibold mb-3"
+              style={{ fontSize: "clamp(1rem, 2vw, 1.25rem)" }}
+            >
+              🔄 Update Status
+            </h5>
+            <div className="row g-2 g-sm-3 align-items-center">
+              <div className="col-12 col-sm-8">
+                <select
+                  className="form-select form-select-lg"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  disabled={updating}
+                  style={{
+                    minHeight: "48px",
+                    fontSize: "clamp(13px, 2vw, 16px)",
+                  }}
+                >
+                  <option value="New">🆕 New</option>
+                  <option value="Contacted">📞 Contacted</option>
+                  <option value="Qualified">✅ Qualified</option>
+                  <option value="Proposal Sent">📧 Proposal Sent</option>
+                  <option value="Closed">🏆 Closed</option>
+                </select>
+              </div>
+              <div className="col-12 col-sm-4">
+                <button
+                  className="btn btn-success w-100 fw-semibold"
+                  onClick={handleStatusUpdate}
+                  disabled={updating}
+                  style={{
+                    minHeight: "48px",
+                    fontSize: "clamp(13px, 2vw, 16px)",
+                  }}
+                >
+                  {updating ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      Updating...
+                    </>
+                  ) : (
+                    "✅ Update"
+                  )}
+                </button>
+              </div>
+
+              {/* Assign Agent row */}
+              <div className="col-12 mt-3">
+                <h6 className="mb-2 fw-semibold">🧑‍💼 Assign Agent</h6>
+                <div className="row g-2">
+                  <div className="col-12 col-sm-8">
+                    <select
+                      className="form-select"
+                      value={assignedAgent}
+                      onChange={(e) => setAssignedAgent(e.target.value)}
+                      disabled={assigning}
+                      style={{ minHeight: "48px" }}
+                    >
+                      <option value="">-- Select Agent --</option>
+                      {agents.map((a) => (
+                        <option key={a._id} value={a._id}>
+                          {a.name} — {a.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-12 col-sm-4">
+                    <button
+                      className="btn btn-primary w-100 fw-semibold"
+                      onClick={handleAssignAgent}
+                      disabled={assigning}
+                      style={{ minHeight: "48px" }}
+                    >
+                      {assigning ? (
+                        <>
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            role="status"
+                            aria-hidden="true"
+                          ></span>
+                          Assigning...
+                        </>
+                      ) : (
+                        "🔁 Assign"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Comments Section Card */}
+          <div className="card p-3 p-sm-4 shadow-sm border-0 mb-4">
+            <h5
+              className="fw-semibold mb-3"
+              style={{ fontSize: "clamp(1rem, 2vw, 1.25rem)" }}
+            >
+              💬 Comments ({comments.length})
+            </h5>
+
+            {/* Comments List */}
+            <div className="mb-4">
+              {comments.length === 0 ? (
+                <div className="alert alert-light text-muted text-center py-4 mb-0">
+                  No comments yet. Be the first to add one!
+                </div>
+              ) : (
+                <div className="list-group list-group-flush">
+                  {comments.map((c) => (
+                    <div
+                      className="list-group-item px-0 py-3 border-bottom"
+                      key={c.id || c._id}
+                    >
+                      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start mb-2 gap-2">
+                        <strong
+                          className="text-break"
+                          style={{ fontSize: "clamp(13px, 2vw, 15px)" }}
+                        >
+                          {c.author}
+                        </strong>
+                        <small
+                          className="text-muted"
+                          style={{ fontSize: "clamp(12px, 2vw, 13px)" }}
+                        >
+                          {new Date(c.createdAt).toLocaleDateString()}
+                        </small>
+                      </div>
+                      <p
+                        className="text-break mb-0"
+                        style={{ fontSize: "clamp(13px, 2vw, 15px)" }}
+                      >
+                        {c.commentText}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add Comment Form */}
+            <div className="border-top pt-3">
+              <label
+                className="form-label fw-semibold mb-2"
+                style={{ fontSize: "clamp(13px, 2vw, 15px)" }}
+              >
+                Add a Comment
+              </label>
+              <textarea
+                className="form-control mb-3"
+                placeholder="Write your comment here..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                style={{
+                  minHeight: "120px",
+                  fontSize: "clamp(13px, 2vw, 16px)",
+                  padding: "12px 16px",
+                }}
+                rows="4"
+              ></textarea>
+
+              <button
+                className="btn btn-primary w-100 fw-semibold"
+                onClick={handleAddComment}
+                style={{
+                  minHeight: "48px",
+                  fontSize: "clamp(13px, 2vw, 16px)",
+                }}
+              >
+                ✨ Add Comment
+              </button>
+            </div>
+          </div>
+
+          {/* Back to Dashboard Button */}
+          <div className="mb-4">
+            <Link
+              to="/"
+              className="btn btn-outline-primary w-100 fw-semibold d-flex align-items-center justify-content-center"
+              style={{
+                minHeight: "48px",
+                fontSize: "clamp(13px, 2vw, 16px)",
+                gap: "8px",
+                textDecoration: "none",
+              }}
+            >
+              🏠 Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
-
-      {/* Status Update */}
-      <div className="mt-4 mb-4">
-        <label className="form-label fw-semibold mb-2">Update Status</label>
-        <div className="input-group gap-2 flex-column flex-sm-row">
-          <select
-            className="form-select"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Qualified">Qualified</option>
-            <option value="Proposal Sent">Proposal Sent</option>
-            <option value="Closed">Closed</option>
-          </select>
-          <button
-            className="btn btn-success fw-semibold"
-            onClick={handleStatusUpdate}
-            style={{ minHeight: "44px" }}
-          >
-            Update
-          </button>
-        </div>
-      </div>
-
-      {/* Comments Section */}
-      <h4 className="mt-4 mb-3">Comments</h4>
-
-      <ul className="list-group mb-3">
-        {comments.length === 0 ? (
-          <li className="list-group-item text-muted text-center">
-            No comments yet.
-          </li>
-        ) : (
-          comments.map((c) => (
-            <li className="list-group-item p-2 p-sm-3" key={c.id || c._id}>
-              <strong className="text-break">{c.author}</strong>:
-              <div className="text-break mt-1">{c.commentText}</div>
-              <small className="text-muted d-block mt-2">
-                {new Date(c.createdAt).toLocaleString()}
-              </small>
-            </li>
-          ))
-        )}
-      </ul>
-
-      <textarea
-        className="form-control mb-3"
-        placeholder="Write a comment..."
-        value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
-        style={{ minHeight: "100px" }}
-        rows="4"
-      ></textarea>
-
-      <button
-        className="btn btn-primary w-100 fw-semibold"
-        onClick={handleAddComment}
-        style={{ minHeight: "44px" }}
-      >
-        Add Comment
-      </button>
     </div>
   );
 };
