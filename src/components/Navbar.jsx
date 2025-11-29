@@ -50,11 +50,11 @@ const Navbar = () => {
             </NavLink>
           </li>
 
-          {/* <li className="nav-item">
-            <Link className="nav-link" to="/sales-management">
+          <li className="nav-item">
+            <NavLink className="nav-link" to="/sales-management">
               Agents Status
-            </Link>
-          </li> */}
+            </NavLink>
+          </li>
 
           <li className="nav-item">
             <NavLink className="nav-link" to="/reports">
