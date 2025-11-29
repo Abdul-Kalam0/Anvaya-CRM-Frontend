@@ -1,16 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [desktopSettingsOpen, setDesktopSettingsOpen] = useState(false);
+  const hoverCloseTimer = useRef(null);
 
   const handleToggle = () => setIsOpen(!isOpen);
   const handleNavClick = () => {
     setIsOpen(false);
     setMobileSettingsOpen(false);
     setDesktopSettingsOpen(false);
+  };
+
+  const openDesktopSettings = () => {
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+    setDesktopSettingsOpen(true);
+  };
+
+  const closeDesktopSettingsDelayed = () => {
+    if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    hoverCloseTimer.current = setTimeout(() => {
+      setDesktopSettingsOpen(false);
+      hoverCloseTimer.current = null;
+    }, 200); // small delay to allow pointer travel
   };
 
   // settings moved to after Reports (last item)
@@ -167,8 +184,8 @@ const Navbar = () => {
                 <li
                   key={i}
                   className="nav-item"
-                  onMouseEnter={() => setDesktopSettingsOpen(true)}
-                  onMouseLeave={() => setDesktopSettingsOpen(false)}
+                  onMouseEnter={openDesktopSettings}
+                  onMouseLeave={closeDesktopSettingsDelayed}
                   style={{ position: "relative" }}
                 >
                   <button
@@ -180,7 +197,11 @@ const Navbar = () => {
                       border: "none",
                       cursor: "pointer",
                     }}
-                    onClick={() => setDesktopSettingsOpen(!desktopSettingsOpen)}
+                    onClick={() =>
+                      desktopSettingsOpen
+                        ? setDesktopSettingsOpen(false)
+                        : openDesktopSettings()
+                    }
                   >
                     {item.label}
                   </button>
@@ -189,14 +210,14 @@ const Navbar = () => {
                     <div
                       style={{
                         position: "absolute",
-                        top: "calc(100% + 8px)",
+                        top: "100%", // <- remove gap so mouse can move into dropdown
                         right: 0,
                         background: "#212529",
                         borderRadius: "8px",
                         padding: "8px",
                         boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
                         minWidth: "180px",
-                        zIndex: 2000,
+                        zIndex: 3000,
                       }}
                     >
                       {item.children.map((c, ci) => (
