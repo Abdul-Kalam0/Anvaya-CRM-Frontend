@@ -1,58 +1,61 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import api from "../utils/api";
+
+// Custom debounce function (replaces lodash for simplicity)
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(null, args), delay);
+  };
+};
 
 const LeadList = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
-  const [stats, setStats] = useState({
-    totalLeads: 0,
-    newLeads: 0,
-    closedLeads: 0,
-    inProgress: 0,
-  });
+  const [message, setMessage] = useState(null);
 
-  // New states for non-blocking notifications and delete confirmation
-  const [message, setMessage] = useState(null); // { type: 'success'|'danger'|'warning', text: string }
-  const [deletingId, setDeletingId] = useState(null); // id pending confirmation
-  const [deleteInProgress, setDeleteInProgress] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false); // popup modal flag
+  // Delete Dialog State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
+  // No Lead Popup State
+  const [showNoLeadModal, setShowNoLeadModal] = useState(false);
+
+  // Fetch Leads (Updated to handle 404 as "no leads" modal)
   const fetchLeads = async () => {
+    setLoading(true);
+    setErrorMessage(null); // Clear previous errors
     try {
-      setLoading(true);
       const params = Object.fromEntries(searchParams);
+      console.log("Fetching leads with params:", params); // Debug: Check sent params
       const res = await api.get("/leads", { params });
+      console.log("API Response:", res.data); // Debug: Check API response
 
-      if (!res.data.leads || res.data.leads.length === 0) {
+      if (!res.data.leads || !res.data.leads.length) {
+        console.log("No leads found - showing modal"); // Debug: Confirm modal trigger
+        setShowNoLeadModal(true);
         setLeads([]);
-        setErrorMessage("No leads match the selected filters.");
-      } else {
-        setLeads(res.data.leads);
-        setErrorMessage(null);
-
-        const totalLeads = res.data.leads.length;
-        const newLeads = res.data.leads.filter(
-          (l) => l.status === "New"
-        ).length;
-        const closedLeads = res.data.leads.filter(
-          (l) => l.status === "Closed"
-        ).length;
-        const inProgress = res.data.leads.filter(
-          (l) => l.status !== "New" && l.status !== "Closed"
-        ).length;
-
-        setStats({ totalLeads, newLeads, closedLeads, inProgress });
+        return;
       }
-    } catch (err) {
-      if (err.response?.status === 404) {
+
+      setLeads(res.data.leads);
+      setShowNoLeadModal(false);
+    } catch (error) {
+      console.error("Fetch error:", error); // Debug: Log errors
+      // Check if it's a 404 (no leads found) - show modal instead of error
+      if (error.response && error.response.status === 404) {
+        console.log("404 - No leads found, showing modal"); // Debug
+        setShowNoLeadModal(true);
         setLeads([]);
-        setErrorMessage("No leads found with the applied filters.");
       } else {
-        setErrorMessage("Unable to fetch leads. Please try again.");
+        setErrorMessage(
+          "Unable to fetch leads. Check your filters or try again."
+        );
+        setShowNoLeadModal(false);
       }
     } finally {
       setLoading(false);
@@ -61,460 +64,250 @@ const LeadList = () => {
 
   useEffect(() => {
     fetchLeads();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // Debounced Filter Handler for Text Inputs (500ms delay to reduce API calls)
+  const debouncedHandleFilter = useCallback(
+    debounce((key, value) => {
+      const trimmedValue = value.trim();
+      console.log(`Applying debounced filter: ${key} = "${trimmedValue}"`); // Debug: Track filter changes
+      const updated = new URLSearchParams(searchParams);
+      if (trimmedValue) {
+        updated.set(key, trimmedValue);
+      } else {
+        updated.delete(key);
+      }
+      setSearchParams(updated);
+    }, 500),
+    [searchParams, setSearchParams]
+  );
+
+  // Immediate Filter Handler for Selects (no debounce needed)
   const handleFilter = (key, value) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (value) newParams.set(key, value);
-    else newParams.delete(key);
-    setSearchParams(newParams);
+    const trimmedValue = value.trim();
+    console.log(`Applying immediate filter: ${key} = "${trimmedValue}"`); // Debug: Track filter changes
+    const updated = new URLSearchParams(searchParams);
+    if (trimmedValue) {
+      updated.set(key, trimmedValue);
+    } else {
+      updated.delete(key);
+    }
+    setSearchParams(updated);
   };
 
   const resetFilters = () => {
+    console.log("Resetting filters"); // Debug: Track reset
     setSearchParams({});
-    setErrorMessage(null);
-    setShowFilters(false);
+    setShowNoLeadModal(false);
   };
 
-  // notification helper
-  const showMessage = (type, text, timeout = 2500) => {
-    setMessage({ type, text });
-    if (timeout) {
-      setTimeout(() => setMessage(null), timeout);
-    }
-  };
-
-  // when user clicks Delete button: open modal popup for confirmation
+  // Open Delete Modal
   const requestDelete = (id) => {
-    setDeletingId(id);
+    setDeleteId(id);
     setShowDeleteModal(true);
   };
 
-  const cancelDelete = () => {
-    setDeletingId(null);
-    setShowDeleteModal(false);
-  };
-
+  // Confirm Delete
   const confirmDelete = async () => {
-    if (!deletingId) return;
-    setDeleteInProgress(true);
     try {
-      await api.delete(`/leads/${deletingId}`);
-      setDeletingId(null);
+      await api.delete(`/leads/${deleteId}`);
       setShowDeleteModal(false);
-      showMessage("success", "Lead deleted successfully.");
-      await fetchLeads();
-    } catch (err) {
-      showMessage("danger", "Failed to delete lead. Please try again.");
-    } finally {
-      setDeleteInProgress(false);
+      setMessage({ type: "success", text: "Lead deleted successfully." });
+      fetchLeads();
+    } catch {
+      setMessage({ type: "danger", text: "Failed to delete lead." });
     }
   };
 
   return (
-    <div
-      className="px-2 px-sm-3 px-md-0"
-      style={{
-        backgroundColor: "#f8f9fa",
-        minHeight: "100vh",
-        paddingBottom: "40px",
-      }}
-    >
-      {/* Header Section */}
-      <div className="mb-4" style={{ paddingTop: "20px" }}>
-        <h1 className="fw-bold text-primary mb-2" style={{ fontSize: "2rem" }}>
-          📊 Dashboard
-        </h1>
-        <p className="text-muted">
-          Welcome to Anvaya CRM - Manage your leads efficiently
-        </p>
-      </div>
+    <div className="container py-4" style={{ minHeight: "72vh" }}>
+      {/* Title */}
+      <h3 className="fw-bold mb-4">📋 Leads</h3>
 
-      {/* Inline notification */}
+      {/* Notification */}
       {message && (
+        <div className={`alert alert-${message.type} text-center fw-semibold`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="alert alert-danger text-center fw-semibold">
+          {errorMessage}
+        </div>
+      )}
+
+      {/* No Leads Modal */}
+      {showNoLeadModal && (
         <div
-          className={`alert alert-${message.type} alert-dismissible fade show mb-3`}
-          role="alert"
+          className="modal fade show"
+          style={{ display: "block", background: "rgba(0,0,0,0.6)" }}
         >
-          <span className="fw-semibold">{message.text}</span>
-          <button
-            type="button"
-            className="btn-close"
-            onClick={() => setMessage(null)}
-            aria-label="Close"
-          />
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content text-center">
+              <div className="modal-header">
+                <h5 className="modal-title fw-bold">⚠️ No Leads Found</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowNoLeadModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p className="text-muted">
+                  No leads match your selected filter criteria. Try adjusting
+                  your filters or resetting them.
+                </p>
+              </div>
+              <div className="modal-footer d-flex justify-content-center">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowNoLeadModal(false)}
+                >
+                  Close
+                </button>
+                <button className="btn btn-primary" onClick={resetFilters}>
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* modal popup for delete confirmation */}
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="modal-backdrop fade show"
-            onClick={cancelDelete}
-            style={{ zIndex: 1040 }}
-          ></div>
-
-          {/* Modal */}
-          <div
-            className="modal d-block"
-            tabIndex="-1"
-            role="dialog"
-            aria-modal="true"
-            style={{ zIndex: 1050 }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") cancelDelete();
-            }}
-          >
-            <div className="modal-dialog modal-dialog-centered" role="document">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Confirm Delete</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    aria-label="Close"
-                    onClick={cancelDelete}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  <p className="mb-0">
-                    Are you sure you want to delete this agent?
-                    <br />
-                    This action <strong>cannot be undone.</strong>
-                  </p>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={cancelDelete}
-                    disabled={deleteInProgress}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={confirmDelete}
-                    disabled={deleteInProgress}
-                  >
-                    {deleteInProgress ? (
-                      <>
-                        <span
-                          className="spinner-border spinner-border-sm me-2"
-                          role="status"
-                          aria-hidden="true"
-                        />
-                        Deleting...
-                      </>
-                    ) : (
-                      "Delete"
-                    )}
-                  </button>
-                </div>
+        <div
+          className="modal fade show"
+          style={{ display: "block", background: "rgba(0,0,0,0.6)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">⚠️ Confirm Delete</h5>
+                <button
+                  className="btn-close"
+                  onClick={() => setShowDeleteModal(false)}
+                ></button>
               </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Stats Cards */}
-      {!loading && leads.length > 0 && (
-        <div className="row g-3 g-md-4 mb-4">
-          <div className="col-12 col-sm-6 col-md-3">
-            <div
-              className="card border-0 shadow-sm p-4"
-              style={{ borderTop: "4px solid #007bff" }}
-            >
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted fw-semibold mb-1">Total Leads</p>
-                  <h3 className="fw-bold text-primary mb-0">
-                    {stats.totalLeads}
-                  </h3>
-                </div>
-                <div style={{ fontSize: "2.5rem" }}>📋</div>
+              <div className="modal-body text-center">
+                <p className="fw-semibold">
+                  Are you sure you want to delete this lead?
+                </p>
+                <small className="text-muted">
+                  This action cannot be undone.
+                </small>
               </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-sm-6 col-md-3">
-            <div
-              className="card border-0 shadow-sm p-4"
-              style={{ borderTop: "4px solid #28a745" }}
-            >
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted fw-semibold mb-1">New Leads</p>
-                  <h3 className="fw-bold text-success mb-0">
-                    {stats.newLeads}
-                  </h3>
-                </div>
-                <div style={{ fontSize: "2.5rem" }}>🆕</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-sm-6 col-md-3">
-            <div
-              className="card border-0 shadow-sm p-4"
-              style={{ borderTop: "4px solid #ffc107" }}
-            >
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted fw-semibold mb-1">In Progress</p>
-                  <h3 className="fw-bold text-warning mb-0">
-                    {stats.inProgress}
-                  </h3>
-                </div>
-                <div style={{ fontSize: "2.5rem" }}>⏳</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-sm-6 col-md-3">
-            <div
-              className="card border-0 shadow-sm p-4"
-              style={{ borderTop: "4px solid #17a2b8" }}
-            >
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted fw-semibold mb-1">Closed Leads</p>
-                  <h3 className="fw-bold text-info mb-0">
-                    {stats.closedLeads}
-                  </h3>
-                </div>
-                <div style={{ fontSize: "2.5rem" }}>🏆</div>
+              <div className="modal-footer d-flex justify-content-center">
+                <button
+                  className="btn btn-secondary px-4"
+                  onClick={() => setShowDeleteModal(false)}
+                >
+                  Cancel
+                </button>
+                <button className="btn btn-danger px-4" onClick={confirmDelete}>
+                  Delete
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Filter Toggle Button - Mobile Only */}
-      <div className="d-md-none mb-3">
-        <button
-          className="btn btn-primary w-100 fw-semibold"
-          onClick={() => setShowFilters(!showFilters)}
-          style={{ minHeight: "48px" }}
-        >
-          {showFilters ? "▼ Hide Filters" : "▶ Show Filters"}
-        </button>
-      </div>
-
-      {/* Filters Card */}
-      <div
-        className={`card p-3 p-sm-4 mb-4 shadow-sm border-0 ${
-          !showFilters ? "d-none d-md-block" : ""
-        }`}
-      >
-        <h5 className="fw-semibold mb-3">🔍 Filters</h5>
-        <div className="row g-2 g-md-3">
-          <div className="col-12 col-md-2">
+      {/* Filters Section */}
+      <div className="card p-3 shadow-sm border-0 mb-4">
+        <h5 className="fw-bold mb-3">🔍 Filters</h5>
+        <div className="row g-3 align-items-center">
+          <div className="col-md-3">
             <input
               className="form-control"
               placeholder="Search by Agent"
-              onChange={(e) => handleFilter("salesAgent", e.target.value)}
-              style={{ fontSize: "14px", minHeight: "40px" }}
+              value={searchParams.get("salesAgent") || ""}
+              onChange={(e) =>
+                debouncedHandleFilter("salesAgent", e.target.value)
+              }
             />
           </div>
-
-          <div className="col-12 col-md-2">
+          <div className="col-md-3">
             <select
               className="form-select"
+              value={searchParams.get("status") || ""}
               onChange={(e) => handleFilter("status", e.target.value)}
-              style={{ fontSize: "14px", minHeight: "40px" }}
             >
               <option value="">📊 All Status</option>
               <option value="New">🆕 New</option>
               <option value="Contacted">📞 Contacted</option>
-              <option value="Qualified">✅ Qualified</option>
+              <option value="Qualified">⭐ Qualified</option>
               <option value="Proposal Sent">📧 Proposal Sent</option>
               <option value="Closed">🏆 Closed</option>
             </select>
           </div>
-
-          <div className="col-12 col-md-2">
+          <div className="col-md-3">
             <input
               className="form-control"
               placeholder="Search tags"
-              onChange={(e) => handleFilter("tags", e.target.value)}
-              style={{ fontSize: "14px", minHeight: "40px" }}
+              value={searchParams.get("tags") || ""}
+              onChange={(e) => debouncedHandleFilter("tags", e.target.value)}
             />
           </div>
-
-          <div className="col-12 col-md-2">
+          <div className="col-md-3">
             <select
               className="form-select"
+              value={searchParams.get("source") || ""}
               onChange={(e) => handleFilter("source", e.target.value)}
-              style={{ fontSize: "14px", minHeight: "40px" }}
             >
               <option value="">🌐 All Sources</option>
-              <option value="Website">📌 Website</option>
-              <option value="Referral">👥 Referral</option>
-              <option value="Cold Call">☎️ Cold Call</option>
+              <option value="Website">🌍 Website</option>
+              <option value="Referral">🤝 Referral</option>
+              <option value="Cold Call">📞 Cold Call</option>
               <option value="Social Media">📱 Social Media</option>
             </select>
           </div>
-
-          <div className="col-12 col-md-2">
-            <button
-              className="btn btn-outline-danger w-100 fw-semibold"
-              onClick={resetFilters}
-              style={{ minHeight: "40px" }}
-            >
-              ⟲ Reset
-            </button>
-          </div>
+        </div>
+        <div className="text-end mt-3">
+          <button
+            className="btn btn-outline-danger px-4"
+            onClick={resetFilters}
+          >
+            ⟲ Reset
+          </button>
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* Loading */}
       {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status"></div>
-          <p className="mt-3 text-muted fw-semibold">Loading leads...</p>
+        <div className="text-center py-4">
+          <div className="spinner-border text-primary"></div>
+          <p className="mt-3">Loading leads...</p>
         </div>
       )}
 
-      {/* Error or Empty State */}
-      {!loading && errorMessage && (
-        <div className="alert alert-warning border-0 shadow-sm" role="alert">
-          <div className="d-flex align-items-center">
-            <span style={{ fontSize: "1.5rem" }}>⚠️</span>
-            <span className="ms-3 fw-semibold">{errorMessage}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Desktop Table View */}
-      {!loading && !errorMessage && leads.length > 0 && (
-        <>
-          <div className="d-none d-md-block">
-            <div className="card border-0 shadow-sm p-0 mb-4">
-              <div className="table-responsive">
-                <table className="table table-hover mb-0">
-                  <thead className="table-dark">
-                    <tr>
-                      <th className="fw-semibold">📝 Lead Name</th>
-                      <th className="fw-semibold">📊 Status</th>
-                      <th className="fw-semibold">🧑‍💼 Agent</th>
-                      <th className="fw-semibold">⭐ Priority</th>
-                      <th className="fw-semibold text-center">⚙️ Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leads.map((lead) => (
-                      <tr key={lead._id} className="align-middle">
-                        <td className="fw-semibold text-break">{lead.name}</td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              lead.status === "New"
-                                ? "bg-primary"
-                                : lead.status === "Contacted"
-                                ? "bg-info"
-                                : lead.status === "Qualified"
-                                ? "bg-success"
-                                : lead.status === "Proposal Sent"
-                                ? "bg-warning text-dark"
-                                : "bg-secondary"
-                            }`}
-                          >
-                            {lead.status}
-                          </span>
-                        </td>
-                        <td>{lead.salesAgent?.name || "Unassigned"}</td>
-                        <td>
-                          <span
-                            className={`badge ${
-                              lead.priority === "High"
-                                ? "bg-danger"
-                                : lead.priority === "Medium"
-                                ? "bg-warning text-dark"
-                                : "bg-secondary"
-                            }`}
-                          >
-                            {lead.priority}
-                          </span>
-                        </td>
-                        <td className="text-center">
-                          <div className="d-flex justify-content-center gap-2">
-                            <Link
-                              to={`/leads/${lead._id}`}
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: "600",
-                                borderRadius: "10px",
-                                padding: "8px 12px",
-                                background: "#007bff",
-                                color: "white",
-                                textDecoration: "none",
-                                border: "none",
-                                cursor: "pointer",
-                                minWidth: "90px",
-                                textAlign: "center",
-                              }}
-                            >
-                              👁️ View
-                            </Link>
-                            <button
-                              onClick={() => requestDelete(lead._id)}
-                              style={{
-                                fontSize: "14px",
-                                fontWeight: "600",
-                                borderRadius: "10px",
-                                padding: "8px 12px",
-                                background: "#dc3545",
-                                color: "white",
-                                border: "none",
-                                cursor: "pointer",
-                                minWidth: "90px",
-                              }}
-                            >
-                              🗑 Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Card View */}
-          <div className="d-md-none">
-            {leads.map((lead) => (
-              <div
-                key={lead._id}
-                className="card mb-3 shadow-sm border-0 p-3"
-                style={{ borderLeft: "4px solid #007bff" }}
-              >
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                  <h6 className="fw-semibold text-break mb-0">{lead.name}</h6>
-                  <span
-                    className={`badge ${
-                      lead.priority === "High"
-                        ? "bg-danger"
-                        : lead.priority === "Medium"
-                        ? "bg-warning text-dark"
-                        : "bg-secondary"
-                    }`}
-                  >
-                    {lead.priority}
-                  </span>
-                </div>
-
-                <div className="row g-2 my-2">
-                  <div className="col-6">
-                    <small className="text-muted d-block">Status</small>
+      {/* Table */}
+      {!loading && leads.length > 0 && (
+        <div className="table-responsive shadow-sm rounded">
+          <table className="table align-middle">
+            <thead
+              style={{
+                background: "#212529",
+                color: "white",
+                fontSize: "16px",
+              }}
+            >
+              <tr>
+                <th>📝 Lead Name</th>
+                <th>📊 Status</th>
+                <th>👤 Agent</th>
+                <th>⭐ Priority</th>
+                <th className="text-center">⚙️ Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((lead) => (
+                <tr key={lead._id}>
+                  <td className="fw-semibold">{lead.name}</td>
+                  <td>
                     <span
-                      className={`badge ${
+                      className={`badge px-3 py-2 ${
                         lead.status === "New"
                           ? "bg-primary"
                           : lead.status === "Contacted"
@@ -528,64 +321,53 @@ const LeadList = () => {
                     >
                       {lead.status}
                     </span>
-                  </div>
-                  <div className="col-6">
-                    <small className="text-muted d-block">Agent</small>
-                    <span className="d-block fw-semibold">
-                      {lead.salesAgent?.name || "Unassigned"}
+                  </td>
+                  <td>{lead.salesAgent?.name || "Unassigned"}</td>
+                  <td>
+                    <span
+                      className={`badge px-3 py-2 ${
+                        lead.priority === "High"
+                          ? "bg-danger"
+                          : lead.priority === "Medium"
+                          ? "bg-warning text-dark"
+                          : "bg-secondary"
+                      }`}
+                    >
+                      {lead.priority}
                     </span>
-                  </div>
-                </div>
-
-                <div className="d-flex gap-2 mt-3">
-                  <Link
-                    to={`/leads/${lead._id}`}
-                    style={{
-                      flex: 1,
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      borderRadius: "10px",
-                      padding: "10px 12px",
-                      background: "#007bff",
-                      color: "white",
-                      textDecoration: "none",
-                      cursor: "pointer",
-                      textAlign: "center",
-                    }}
-                  >
-                    👁️ View
-                  </Link>
-                  <button
-                    onClick={() => requestDelete(lead._id)}
-                    style={{
-                      flex: 1,
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      borderRadius: "10px",
-                      padding: "10px 12px",
-                      background: "#dc3545",
-                      color: "white",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    🗑 Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      {/* No Leads State */}
-      {!loading && !errorMessage && leads.length === 0 && (
-        <div className="card p-5 text-center border-0 shadow-sm">
-          <div style={{ fontSize: "4rem" }}>📭</div>
-          <h5 className="fw-bold mt-3 mb-2">No Leads Found</h5>
-          <p className="text-muted">
-            Start by creating your first lead or adjusting your filters
-          </p>
+                  </td>
+                  <td className="text-center">
+                    <div className="d-flex justify-content-center gap-2">
+                      <Link
+                        to={`/leads/${lead._id}`}
+                        className="btn btn-sm fw-semibold"
+                        style={{
+                          background: "#0d6efd",
+                          color: "white",
+                          borderRadius: "25px",
+                          padding: "8px 18px",
+                        }}
+                      >
+                        👁 View
+                      </Link>
+                      <button
+                        onClick={() => requestDelete(lead._id)}
+                        className="btn btn-sm fw-semibold"
+                        style={{
+                          background: "#dc3545",
+                          color: "white",
+                          borderRadius: "25px",
+                          padding: "8px 18px",
+                        }}
+                      >
+                        🗑 Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

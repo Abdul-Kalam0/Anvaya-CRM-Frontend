@@ -13,6 +13,7 @@ import Reports from "./components/Reports";
 import Navbar from "./components/Navbar";
 import SalesAgentView from "./components/SalesAgentView";
 import Footer from "./components/Footer";
+import Dashboard from "./components/Dashboard";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
       <div className="container-fluid px-2 px-sm-3 px-md-4 mt-2 mt-sm-3 mt-md-4">
         <div className="card shadow-sm p-3 p-sm-4">
           <Routes>
-            <Route path="/" element={<LeadList />} />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/leads" element={<LeadList />} />
             <Route path="/leads/:id" element={<LeadDetails />} />
             <Route path="/create-lead" element={<LeadForm />} />
