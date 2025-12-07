@@ -6,10 +6,10 @@ A full-featured **Customer Relationship Management System** designed to help tea
 
 ## 🌍 Live Demo
 
-| Layer    | URL                                        |
+| Service        | Link                                        |
 | -------- | ------------------------------------------ |
-| Frontend | https://anvaya-crm-001.vercel.app/         |
-| Backend  | https://anvaya-crm-backend-001.vercel.app/ |
+| 🖥️ Frontend | https://anvaya-crm-001.vercel.app/         |
+| ⚙️ Backend  | https://anvaya-crm-backend-001.vercel.app/ |
 
 ---
 
