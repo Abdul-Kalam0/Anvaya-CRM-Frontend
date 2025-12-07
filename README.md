@@ -35,17 +35,17 @@ A full-featured **Customer Relationship Management System** designed to help tea
 
 > Upload screenshots inside `/screenshots/` folder and update paths below.
 
-| Dashboard                           | Leads Table                 |
-| ----------------------------------- | --------------------------- |
-| ![Dashboard](assests/Dashboard.jpg) | ![Leads](assests/Leads.jpg) |
+| Dashboard                              | Leads Table                    |
+| -------------------------------------- | ------------------------------ |
+| ![Dashboard](src/assets/Dashboard.jpg) | ![Leads](src/assets/Leads.jpg) |
 
-| Sales Agents                      | Agents Form                                      |
-| --------------------------------- | ------------------------------------------------ |
-| ![Agents](src/assests/Agents.jpg) | ![Create-Agent](src/assests/CreateAgentForm.jpg) |
+| Sales Agents                     | Agents Form                                     |
+| -------------------------------- | ----------------------------------------------- |
+| ![Agents](src/assets/Agents.jpg) | ![Create-Agent](src/assets/CreateAgentForm.jpg) |
 
-| Lead Form                                      | Reporting                             |
-| ---------------------------------------------- | ------------------------------------- |
-| ![Create-Lead](src/assests/CreateLeadForm.jpg) | ![Reporting](src/assests/Reports.jpg) |
+| Lead Form                                     | Reporting                            |
+| --------------------------------------------- | ------------------------------------ |
+| ![Create-Lead](src/assets/CreateLeadForm.jpg) | ![Reporting](src/assets/Reports.jpg) |
 
 ---
 
