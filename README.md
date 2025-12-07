@@ -31,7 +31,6 @@ A full-featured **Customer Relationship Management System** designed to help tea
 
 ## 📸 UI Preview
 
-> Upload screenshots inside `/screenshots/` folder and update paths below.
 
 | Dashboard                              | Leads Table                    |
 | -------------------------------------- | ------------------------------ |
