@@ -61,7 +61,10 @@ const AgentForm = () => {
   };
 
   return (
-    <div className="container-fluid px-3 px-sm-4 px-md-0">
+    <div
+      className="container-fluid px-3 px-sm-4 px-md-0 "
+      style={{ minHeight: "72vh" }}
+    >
       <div className="row">
         <div className="col-12 col-sm-10 col-md-8 col-lg-6 mx-auto">
           <div style={{ paddingTop: "20px", paddingBottom: "40px" }}>

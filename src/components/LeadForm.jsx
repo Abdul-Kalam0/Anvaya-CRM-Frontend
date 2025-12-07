@@ -100,6 +100,7 @@ const LeadForm = () => {
           margin: "0 auto",
           paddingTop: "20px",
           paddingBottom: "40px",
+          minHeight: "72vh",
         }}
       >
         {/* Header */}

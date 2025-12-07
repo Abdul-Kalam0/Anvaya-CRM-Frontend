@@ -80,7 +80,7 @@ const AgentList = () => {
   };
 
   return (
-    <div className="px-2 px-sm-3 px-md-0">
+    <div className="px-2 px-sm-3 px-md-0" style={{ minHeight: "72vh" }}>
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
         {/* Alert message */}
         {message && (

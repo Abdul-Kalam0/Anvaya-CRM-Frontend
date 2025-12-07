@@ -129,7 +129,7 @@ const LeadDetails = () => {
     );
 
   return (
-    <div className="container-fluid py-3 py-sm-4">
+    <div className="container-fluid py-3 py-sm-4" style={{ minHeight: "72vh" }}>
       <div className="row">
         <div className="col-12 col-lg-10 mx-lg-auto">
           {/* Status Message */}

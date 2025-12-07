@@ -75,7 +75,7 @@ const SalesAgentView = () => {
     );
 
   return (
-    <div className="px-2 px-sm-3 px-md-0">
+    <div className="px-2 px-sm-3 px-md-0" style={{ minHeight: "72vh" }}>
       <h2 className="fw-bold mb-3 text-primary">📌 Leads by Sales Agent</h2>
 
       {/* Agent Selector */}

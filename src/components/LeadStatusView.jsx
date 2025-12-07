@@ -43,7 +43,7 @@ const LeadStatusView = () => {
     );
 
   return (
-    <div className="px-2 px-sm-3 px-md-0">
+    <div className="px-2 px-sm-3 px-md-0" style={{ minHeight: "72vh" }}>
       <h2 className="mb-3 mb-sm-4 fw-bold text-primary">📌 Leads by Status</h2>
 
       {/* Error Message */}
