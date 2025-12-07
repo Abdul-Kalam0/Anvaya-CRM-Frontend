@@ -1,162 +1,146 @@
-# 🚀 Anvaya CRM (Full‑Stack Project)
+# 🚀 Anvaya CRM — Full Stack Project
 
-A complete **Customer Relationship Management (CRM)** system built using:
+A full-featured **Customer Relationship Management System** designed to help teams manage leads, track progress, assign sales agents, collaborate using comments, and generate real-time reports with visual insights.
 
-- **React + Axios + Bootstrap** (Frontend)
-- **Node.js + Express + MongoDB (Mongoose)** (Backend)
-- **REST API with CRUD operations**
-- **Role‑based management for Leads & Sales Agents**
-- **Analytics Dashboard + Reporting Charts (Chart.js)**
+---
 
-Live Backend API:  
-🔗 [Live Demo] (https://anvaya-crm-backend-001.vercel.app/)
+## 🌍 Live Demo
+
+> _(Links update once deployed)_
+
+| Layer    | URL                                        |
+| -------- | ------------------------------------------ |
+| Frontend | https://anvaya-crm-001.vercel.app/         |
+| Backend  | https://anvaya-crm-backend-001.vercel.app/ |
 
 ---
 
 ## 🧩 Features
 
-| Category            | Included                                            |
-| ------------------- | --------------------------------------------------- |
-| 🧑‍💼 Lead Management  | ✔ Create, view, update, delete leads                |
-| 🎯 Status Tracking  | ✔ Status filters (New, Qualified, Proposal, Closed) |
-| 🏷 Tags & Priority   | ✔ Add multiple tags & priority (Low/Medium/High)    |
-| 👥 Agent Assignment | ✔ Assign leads to agents                            |
-| 💬 Comments System  | ✔ Add time‑stamped comments on each lead            |
-| 📊 Analytics        | ✔ Pipeline charts + closed‑lead summary             |
-| 🔍 Smart Filters    | ✔ Filter by status, priority, tags, source          |
-| 📱 Responsive UI    | ✔ Works on mobile, tablets, and desktop             |
+- Lead Create/Update/Delete
+- Assign leads to sales agents
+- Filter and Search leads by:
+  - Status
+  - Priority
+  - Tags
+  - Source
+- Commenting and Activity Tracking
+- Dashboard with charts (pipeline, progress, reporting)
+- Fully responsive UI
+- REST API powered integration
+
+---
+
+## 📸 UI Preview
+
+> Upload screenshots inside `/screenshots/` folder and update paths below.
+
+| Dashboard                               | Leads Table                     |
+| --------------------------------------- | ------------------------------- |
+| ![dashboard](screenshots/dashboard.jpg) | ![leads](screenshots/leads.jpg) |
+
+| Lead Form                                   | Reporting                                  |
+| ------------------------------------------- | ------------------------------------------ |
+| ![create-lead](screenshots/create-lead.jpg) | ![reporting](screenshots/report-chart.jpg) |
 
 ---
 
 ## 🛠 Tech Stack
 
-### Frontend
-
-- React (Vite)
-- Axios
-- Bootstrap
-- React Router
-- Chart.js (Reports)
-
-### Backend
-
-- Node.js
-- Express
-- MongoDB + Mongoose
-- REST API architecture
-- CORS, Validation, Sanitization
-
-### Deployment
-
-| Layer    | Platform                  |
-| -------- | ------------------------- |
-| Frontend | Vercel / Netlify          |
-| Backend  | Vercel / Render / Railway |
-| Database | MongoDB Atlas             |
+| Category   | Technology                                      |
+| ---------- | ----------------------------------------------- |
+| Frontend   | React, Axios, Bootstrap, React Router, Chart.js |
+| Backend    | Node.js, Express, Mongoose                      |
+| Database   | MongoDB (Atlas)                                 |
+| Deployment | Vercel                                          |
 
 ---
 
-## 📦 Project Setup
+## 📦 Setup Instructions
 
-### 1️⃣ Clone the Repository
+### 1️⃣ Clone Repository
 
 ```sh
 git clone https://github.com/Abdul-Kalam0/Anvaya-CRM-Frontend.git
 cd Anvaya-CRM-Frontend
 ```
 
----
-
-### 2️⃣ Backend Setup
+### 2️⃣ Install Dependencies (Frontend + Backend)
 
 ```sh
-cd backend
-npm install
+cd client && npm install
+cd ../server && npm install
 ```
 
-Create `.env`:
+### 3️⃣ Configure Environment Variables
+
+Create a `.env` in `/server`:
 
 ```
 PORT=3000
-MONGO_URI=your_mongodb_connection
-```
-
-Run server:
-
-```sh
-npm run dev
+MONGO_URI=your_mongodb_connection_string
 ```
 
 ---
 
-### 3️⃣ Frontend Setup
+### 4️⃣ Run Project
+
+#### Backend:
+
+```sh
+cd server
+npm run dev
+```
+
+#### Frontend:
 
 ```sh
 cd client
-npm install
 npm run dev
 ```
 
 ---
 
-## 📡 API Endpoints
+## 📡 Core API Routes
 
-| Method | Route                 | Description         |
-| ------ | --------------------- | ------------------- |
-| POST   | `/leads`              | Create lead         |
-| GET    | `/leads`              | Get all leads       |
-| GET    | `/leads/:id`          | Get lead by ID      |
-| PUT    | `/leads/:id`          | Update lead         |
-| DELETE | `/leads/:id`          | Delete lead         |
-| POST   | `/agents`             | Create agent        |
-| GET    | `/agents`             | List agents         |
-| POST   | `/leads/:id/comments` | Add comment         |
-| GET    | `/report/...`         | Analytics reporting |
+> Full API documentation located inside backend README.
+
+| Method | Endpoint              | Purpose        |
+| ------ | --------------------- | -------------- |
+| POST   | `/leads`              | Create lead    |
+| GET    | `/leads`              | Fetch leads    |
+| PUT    | `/leads/:id`          | Edit lead      |
+| DELETE | `/leads/:id`          | Delete lead    |
+| POST   | `/agents`             | Create agent   |
+| GET    | `/agents`             | Fetch agents   |
+| POST   | `/leads/:id/comments` | Add comment    |
+| GET    | `/report/...`         | Reporting data |
 
 ---
 
-## 🔧 Folder Structure
+## 🚧 Upcoming Features
 
+- JWT Authentication
+- Bulk lead import/export (CSV)
+- Multi-role permissions
+- Notifications and reminders
+- Dark mode
+
+---
+
+## 🤝 Contribution Guidelines
+
+```sh
+git checkout -b feature-name
+git commit -m "feat: your change here"
+git push origin feature-name
 ```
-📦 Anvaya‑CRM
- ┣ 📁 backend
- ┃ ┣ 📁 models
- ┃ ┣ 📁 routes
- ┃ ┣ 📁 controllers
- ┃ ┣ server.js
- ┃ ┗ config/db.js
- ┣ 📁 frontend
- ┃ ┣ 📁 components
- ┃ ┣ App.jsx
- ┃ ┗ utils/api.js
- ┗ README.md
-```
 
 ---
 
-## 🤝 Contributing
+## 📜 License
 
-1. Fork repo
-2. Create new feature branch:
-   ```sh
-   git checkout -b feature-name
-   ```
-3. Push and create Pull Request
-
----
-
-## 🚧 Future Roadmap
-
-- ☐ Add Authentication (Admin/Agent roles)
-- ☐ Export reports (PDF / CSV)
-- ☐ Notifications & Email reminders
-- ☐ Dark Mode
-
----
-
-## 📄 License
-
-MIT License — Free to use & customize.
+MIT License © 2025 — Abdul Kalam
 
 ---
 
