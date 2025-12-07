@@ -13,20 +13,6 @@ Live Backend API:
 
 ---
 
-## 📸 Screenshots (UI Preview)
-
-> (These will show once you upload images to GitHub)
-
-| Dashboard                            | Leads View                   |
-| ------------------------------------ | ---------------------------- |
-| `![Dashboard](assets/dashboard.jpg)` | `![Leads](assets/Leads.jpg)` |
-
-| Create Lead                          | Agent Management               | Reporting                        |
-| ------------------------------------ | ------------------------------ | -------------------------------- |
-| `![Form](assets/CreateLeadForm.jpg)` | `![Agents](assets/Agents.jpg)` | `![Reports](assets/Reports.jpg)` |
-
----
-
 ## 🧩 Features
 
 | Category            | Included                                            |
