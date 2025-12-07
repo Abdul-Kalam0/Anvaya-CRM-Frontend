@@ -39,13 +39,13 @@ A full-featured **Customer Relationship Management System** designed to help tea
 | ----------------------------------- | --------------------------- |
 | ![Dashboard](assests/Dashboard.jpg) | ![Leads](assests/Leads.jpg) |
 
-| Sales Agents                  | Agents Form                                  |
-| ----------------------------- | -------------------------------------------- |
-| ![Agents](assests/Agents.jpg) | ![Create-Agent](assests/CreateAgentForm.jpg) |
+| Sales Agents                      | Agents Form                                      |
+| --------------------------------- | ------------------------------------------------ |
+| ![Agents](src/assests/Agents.jpg) | ![Create-Agent](src/assests/CreateAgentForm.jpg) |
 
-| Lead Form                                  | Reporting                         |
-| ------------------------------------------ | --------------------------------- |
-| ![Create-Lead](assests/CreateLeadForm.jpg) | ![Reporting](assests/Reports.jpg) |
+| Lead Form                                      | Reporting                             |
+| ---------------------------------------------- | ------------------------------------- |
+| ![Create-Lead](src/assests/CreateLeadForm.jpg) | ![Reporting](src/assests/Reports.jpg) |
 
 ---
 
